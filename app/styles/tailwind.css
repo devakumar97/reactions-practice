@@ -77,4 +77,106 @@
 
 		--ring: 217.2 32.6% 60%;
 	}
+
+	.ghost {
+		--background: 231 15% 18%;
+		--foreground: 60 30% 96%;
+
+		--muted: 231 15% 24%;
+		--muted-foreground: 60 20% 80%;
+
+		--popover: 231 15% 20%;
+		--popover-foreground: 60 30% 96%;
+
+		--card: 231 15% 18%;
+		--card-foreground: 60 30% 96%;
+
+		--border: 231 15% 28%;
+		--input: 231 15% 28%;
+		--input-invalid: 0 84.2% 60.2%;
+
+		--primary: 343 89% 78%; /* Purple */
+		--primary-foreground: 231 15% 18%;
+
+		--secondary: 343 97% 77%; /* Cyan */
+		--secondary-foreground: 231 15% 18%;
+
+		--accent: 343 50% 50%; /* Pink */
+		--accent-foreground: 231 15% 18%;
+
+		--destructive: 0 70% 50%;
+		--destructive-foreground: 60 30% 96%;
+
+		--ring: 231 15% 48%;
+
+		--foreground-destructive: 345 82.7% 40.8%;
+	}
+
+	.waves {
+		--background: 180 52% 96%;
+		--foreground: 200 100% 10%;
+
+		--muted: 180 52% 90%;
+		--muted-foreground: 200 40% 30%;
+
+		--popover: 180 52% 98%;
+		--popover-foreground: 200 100% 10%;
+
+		--card: 180 52% 96%;
+		--card-foreground: 200 100% 10%;
+
+		--border: 180 40% 85%;
+		--input: 180 40% 85%;
+		--input-invalid: 0 84.2% 60.2%;
+
+		--primary: 182 100% 35%; /* Aqua blue */
+		--primary-foreground: 210 40% 98%;
+
+		--secondary: 180 40% 80%;
+		--secondary-foreground: 200 100% 10%;
+
+		--accent: 180 60% 70%;
+		--accent-foreground: 200 100% 10%;
+
+		--destructive: 0 70% 50%;
+		--destructive-foreground: 210 40% 98%;
+
+		--ring: 182 60% 60%;
+
+		--foreground-destructive: 345 82.7% 40.8%;
+	}
+
+	.palette {
+		--background: 60 6% 15%;
+		--foreground: 60 30% 95%;
+
+		--muted: 60 6% 20%;
+		--muted-foreground: 60 20% 70%;
+
+		--popover: 60 6% 17%;
+		--popover-foreground: 60 30% 95%;
+
+		--card: 60 6% 15%;
+		--card-foreground: 60 30% 95%;
+
+		--border: 60 6% 25%;
+		--input: 60 6% 25%;
+		--input-invalid: 0 84.2% 60.2%;
+
+		--primary: 82 100% 50%; /* Lime green */
+		--primary-foreground: 60 6% 15%;
+
+		--secondary: 82 100% 55%; /* Orange */
+		--secondary-foreground: 60 6% 15%;
+
+		--accent: 82 40% 50%; /* Pink */
+		--accent-foreground: 60 6% 15%;
+
+		--destructive: 0 70% 50%;
+		--destructive-foreground: 60 30% 95%;
+
+		--ring: 82 70% 60%;
+
+		--foreground-destructive: 345 82.7% 40.8%;
+	}
 }
