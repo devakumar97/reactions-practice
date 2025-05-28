@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { useIsPending } from './misc.tsx'
+import { useTranslation } from 'react-i18next'
 
 export const GITHUB_PROVIDER_NAME = 'github'
 // to add another provider, set their name here and add it to the providerNames below
@@ -31,6 +32,8 @@ export function ProviderConnectionForm({
 	const label = providerLabels[providerName]
 	const formAction = `/auth/${providerName}`
 	const isPending = useIsPending({ formAction })
+	const { t } = useTranslation();
+
 	return (
 		<Form
 			className="flex items-center justify-center gap-2"
@@ -48,7 +51,7 @@ export function ProviderConnectionForm({
 				<span className="inline-flex items-center gap-1.5">
 					{providerIcons[providerName]}
 					<span>
-						{type} with {label}
+						{t('auth.actionWithProvider', { type, label })}
 					</span>
 				</span>
 			</StatusButton>
