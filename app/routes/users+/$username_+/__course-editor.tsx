@@ -8,25 +8,27 @@ import {
 	type FieldMetadata,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { Img } from 'openimg/react'
+import { type Course, type CourseImage } from '@prisma/client'
+import { type SerializeFrom } from '@remix-run/node'
+import { Form, useActionData } from '@remix-run/react'
 import { useState } from 'react'
-import { Form } from 'react-router'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
-import { ErrorList, Field, TextareaField, DropdownField } from '#app/components/forms.tsx'
+import { DropdownField, ErrorList, Field, TextareaField } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { Label } from '#app/components/ui/label.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { Textarea } from '#app/components/ui/textarea.tsx'
-import { cn, getProjectImgSrc, useIsPending } from '#app/utils/misc.tsx'
-import { type Info } from './+types/projects.$projectId_.edit.ts'
+import { cn, getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
+import { type action } from './__course-editor.server'
 
 const titleMinLength = 1
 const titleMaxLength = 100
 const descriptionMinLength = 1
 const descriptionMaxLength = 5000
+
 export const MAX_UPLOAD_SIZE = 1024 * 1024 * 3; // 3MB
 
 const ImageFieldsetSchema = z.object({
@@ -42,48 +44,41 @@ const ImageFieldsetSchema = z.object({
 
 export type ImageFieldset = z.infer<typeof ImageFieldsetSchema>
 
-export const ProjectEditorSchema = z.object({
+export const CourseEditorSchema = z.object({
 	id: z.string().optional(),
 	title: z.string().min(titleMinLength).max(titleMaxLength),
 	description: z.string().min(descriptionMinLength).max(descriptionMaxLength),
-	status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED']),
-	deadline: z.preprocess(
-    (val) => {
-      if (typeof val === "string" || typeof val === "number") {
-        const date = new Date(val);
-        return isNaN(date.getTime()) ? undefined : date;
-      }
-      return val instanceof Date ? val : undefined;
-    },
-    z.date()),
+	level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
+	duration: z.number().int(),
 	images: z.array(ImageFieldsetSchema).max(5).optional(),
 })
 
-export function ProjectEditor({
-	project,
-	actionData,
+export function CourseEditor({
+	course,
 }: {
-	project?: Info['loaderData']['project']
-	actionData?: Info['actionData']
+	course?: SerializeFrom<
+			Pick<Course, 'id' | 'title' | 'description' | 'level' | 'duration'> & {
+				images: Array<Pick<CourseImage, 'id' | 'altText'>>
+			}
+		>
 }) {
+	const actionData = useActionData<typeof action>()
 	const isPending = useIsPending()
 
 	const [form, fields] = useForm({
-		id: 'project-editor',
-		constraint: getZodConstraint(ProjectEditorSchema),
+		id: 'course-editor',
+		constraint: getZodConstraint(CourseEditorSchema),
 		lastResult: actionData?.result,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: ProjectEditorSchema })
+			return parseWithZod(formData, { schema: CourseEditorSchema })
 		},
 		defaultValue: {
-			id: project?.id ?? '',
-			title: project?.title ?? '' ,
-			description: project?.description ?? '',
-			status: project?.status ?? 'PENDING',
-			deadline: project?.deadline
-			  ? new Date(project.deadline).toISOString().split('T')[0]
-			  : '',
-			images: project?.images?.map((img) => ({
+			id: course?.id ?? '',
+			title: course?.title ?? '' ,
+			description: course?.description ?? '',
+			level: course?.level,
+			duration: course?.duration,
+			images: course?.images?.map((img) => ({
 			  ...img,
 			  file: undefined,
 			})) ?? [],
@@ -103,7 +98,7 @@ export function ProjectEditor({
 					encType="multipart/form-data"
 				   >
 					<button type="submit" className="hidden" />
-					{project ? <input type="hidden" name="id" value={project.id} /> : null}
+					{course ? <input type="hidden" name="id" value={course.id} /> : null}
 					<div className="flex flex-col gap-1">
 						<Field
 							labelProps={{ children: 'Title' }}
@@ -116,26 +111,23 @@ export function ProjectEditor({
 							errors={fields.description.errors}
 						/>
 						<Field
-							labelProps={{ children: 'Deadline' }}
+							labelProps={{ children: 'duration' }}
 							inputProps={{
-							defaultValue: project?.deadline
-							? new Date(project.deadline).toISOString().split('T')[0]
-							: '',
-							...getInputProps(fields.deadline, { type: 'date' }), 
+							defaultValue: course?.duration,
+							...getInputProps(fields.duration,{ type: 'text' }), 
 							}}
-							errors={fields.deadline.errors}
+							errors={fields.duration.errors}
 							/>
 						<DropdownField 
-							labelProps={{ children: 'Status' }}
+							labelProps={{ children: 'Level' }}
 							selectProps={{
-							name: 'status',
-							defaultValue: project?.status ?? 'PENDING', 
+							name: 'level',
+							defaultValue: course?.level, 
 							children: (
 							<>
-								<option value="PENDING">Pending</option>
-								<option value="IN_PROGRESS">In Progress</option>
-								<option value="COMPLETED">Completed</option>
-								<option value="ARCHIVED">Archived</option>
+								<option value="BEGINNER">BEGINNER</option>
+								<option value="INTERMEDIATE">INTERMEDIATE</option>
+								<option value="ADVANCED">ADVANCED</option>
 							</>
 					),
 				}}
@@ -144,7 +136,7 @@ export function ProjectEditor({
 							<Label>Images</Label>
 							<ul className="flex flex-col gap-4">
 								{imageList.map((imageMeta, index) => {
-									const image = project?.images[index]
+									const image = course?.images[index]
 									return (
 										<li key={imageMeta.key} 
 										className="relative border-b-2 border-muted-foreground"
@@ -161,7 +153,7 @@ export function ProjectEditor({
 												</span>{' '}
 												<span className="sr-only">Remove image {index + 1}</span>
 											</button>
-											<ImageChooser meta={imageMeta} objectKey={image?.objectKey} />
+											<ImageChooser meta={imageMeta}  />
 										</li>
 									)
 								})}
@@ -194,15 +186,13 @@ export function ProjectEditor({
 
 function ImageChooser({
 	meta,
-	objectKey,
 }: {
 	meta: FieldMetadata<ImageFieldset>
-	objectKey: string | undefined
 }) {
 	const fields = meta.getFieldset()
 	const existingImage = Boolean(fields.id.initialValue)
 	const [previewImage, setPreviewImage] = useState<string | null>(
-		objectKey ? getProjectImgSrc(objectKey) : null, // ✅ Updated for projects
+		fields.id.initialValue ? getCourseImgSrc(fields.id.initialValue) : null,
 	)
 	const [altText, setAltText] = useState(fields.altText.initialValue ?? '')
 
@@ -222,7 +212,7 @@ function ImageChooser({
 							{previewImage ? (
 								<div className="relative">
 									{existingImage ? (
-										<Img
+										<img
 											src={previewImage}
 											alt={altText ?? ''}
 											className="h-32 w-32 rounded-lg object-cover"
@@ -297,5 +287,5 @@ function ImageChooser({
 }
 
 export function ErrorBoundary() {
-	return <GeneralErrorBoundary statusHandlers={{ 404: ({ params }) => <p>No project with the id "{params.projectId}" exists</p> }} />
+	return <GeneralErrorBoundary statusHandlers={{ 404: ({ params }) => <p>No Course with the id "{params.courseId}" exists</p> }} />
 }

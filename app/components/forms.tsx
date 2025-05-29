@@ -63,7 +63,44 @@ export function Field({
 		</div>
 	)
 }
+export function DropdownField({
+	labelProps,
+	selectProps,
+	errors,
+	className,
+}: {
+	labelProps: React.LabelHTMLAttributes<HTMLLabelElement>
+	selectProps: React.SelectHTMLAttributes<HTMLSelectElement>
+	errors?: ListOfErrors
+	className?: string
+}) {
+	const fallbackId = useId()
+	const id = selectProps.id ?? fallbackId
+	const errorId = errors?.length ? `${id}-error` : undefined
 
+	return (
+		<div className={className}>
+			{/* Label */}
+			<Label htmlFor={id} {...labelProps} />
+<br/>
+			{/* Dropdown (Select) */}
+			<select
+				id={id}
+				aria-invalid={errorId ? true : undefined}
+				aria-describedby={errorId}
+				className="border rounded px-3 py-2"
+				{...selectProps}
+			>
+				{selectProps.children}
+			</select>
+
+			{/* Error Messages */}
+			<div className="min-h-[32px] px-4 pb-3 pt-1">
+				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
+			</div>
+		</div>
+	)
+}
 export function OTPField({
 	labelProps,
 	inputProps,

@@ -6,6 +6,7 @@
 	"root.login": "Iniciar sesión",
 	"root.logout": "Cerrar sesión",
 	"root.notes": "Notas",
+	"root.courses":"Courses",
 	"root.profile": "Perfil",
 	"search": "Buscar",
 	"login": {

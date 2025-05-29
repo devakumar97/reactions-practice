@@ -1,34 +1,35 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { Img } from 'openimg/react'
-import { Link, NavLink, Outlet } from 'react-router'
+import { json, type LoaderFunctionArgs } from '@remix-run/node'
+import { Link, NavLink, Outlet, useLoaderData } from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { cn, getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
-import { type Route } from './+types/projects.ts'
 
-export async function loader({ params }: Route.LoaderArgs) {
+
+export async function loader({ params }: LoaderFunctionArgs) {
 	const owner = await prisma.user.findFirst({
 		select: {
 			id: true,
 			name: true,
 			username: true,
-			image: { select: { objectKey: true } },
-			projects: { select: { id: true, title: true, status: true } }, 
+			image: { select: { id: true } },
+			courses: { select: { id: true, title: true, level: true , language:true }}, 
 		},
 		where: { username: params.username },
 	})
 
 	invariantResponse(owner, 'Owner not found', { status: 404 })
 
-	return { owner }
+	return json({ owner })
 }
 
-export default function ProjectsRoute({ loaderData }: Route.ComponentProps) {
+export default function CoursesRoute() {
+	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
-	const isOwner = user?.id === loaderData.owner.id
-	const ownerDisplayName = loaderData.owner.name ?? loaderData.owner.username
+	const isOwner = user?.id === data.owner.id
+	const ownerDisplayName = data.owner.name ?? data.owner.username
 	const navLinkDefaultClassName =
 		'line-clamp-2 block rounded-l-full py-2 pl-8 pr-6 text-base lg:text-xl'
 
@@ -38,18 +39,18 @@ export default function ProjectsRoute({ loaderData }: Route.ComponentProps) {
 				<div className="relative col-span-1">
 					<div className="absolute inset-0 flex flex-col">
 						<Link
-							to={`/users/${loaderData.owner.username}`}
+							to={`/users/${data.owner.username}`}
 							className="flex flex-col items-center justify-center gap-2 bg-muted pb-4 pl-8 pr-4 pt-12 lg:flex-row lg:justify-start lg:gap-4"
 						>
-							<Img
-								src={getUserImgSrc(loaderData.owner.image?.objectKey)}
+							<img
+								src={getUserImgSrc(data.owner.image?.id)}
 								alt={ownerDisplayName}
 								className="h-16 w-16 rounded-full object-cover lg:h-24 lg:w-24"
 								width={256}
 								height={256}
 							/>
 							<h1 className="text-center text-base font-bold md:text-lg lg:text-left lg:text-2xl">
-								{ownerDisplayName}'s Projects
+								{ownerDisplayName}'s Courses
 							</h1>
 						</Link>
 						<ul className="overflow-y-auto overflow-x-hidden pb-12">
@@ -61,21 +62,21 @@ export default function ProjectsRoute({ loaderData }: Route.ComponentProps) {
 											cn(navLinkDefaultClassName, isActive && 'bg-accent')
 										}
 									>
-										<Icon name="plus">New Project</Icon>
+										<Icon name="plus">Add Course</Icon>
 									</NavLink>
 								</li>
 							) : null}
-							{loaderData.owner.projects.map((project) => (
-								<li key={project.id} className="p-1 pr-0">
+							{data.owner.courses.map((course) => (
+								<li key={course.id} className="p-1 pr-0">
 									<NavLink
-										to={project.id}
+										to={course.id}
 										preventScrollReset
 										prefetch="intent"
 										className={({ isActive }) =>
 											cn(navLinkDefaultClassName, isActive && 'bg-accent')
 										}
 									>
-										{project.title} ({project.status})
+										{course.title} ({course.level} {course.language})
 									</NavLink>
 								</li>
 							))}

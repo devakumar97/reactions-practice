@@ -1,14 +1,19 @@
+
 import { parseWithZod } from '@conform-to/zod'
-import { parseFormData } from '@mjackson/form-data-parser'
 import { createId as cuid } from '@paralleldrive/cuid2'
-import { data, redirect, type ActionFunctionArgs } from 'react-router'
+import {
+	unstable_createMemoryUploadHandler as createMemoryUploadHandler,
+	json,
+	unstable_parseMultipartFormData as parseMultipartFormData,
+	redirect,
+	type ActionFunctionArgs,
+} from '@remix-run/node'
 import { z } from 'zod'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
-import { uploadProjectImage } from '#app/utils/storage.server.ts'
 import {
 	MAX_UPLOAD_SIZE,
-	ProjectEditorSchema,
+	CourseEditorSchema,
 	type ImageFieldset,
 } from './__course-editor'
 
@@ -30,37 +35,36 @@ function imageHasId(
 export async function action({ request }: ActionFunctionArgs) {
 	const userId = await requireUserId(request);
 	// Parsing the Form Data
-	const formData = await parseFormData(request, {
-		maxFileSize: MAX_UPLOAD_SIZE,
-	});
+	const formData = await parseMultipartFormData(request, 
+		createMemoryUploadHandler({ maxPartSize: MAX_UPLOAD_SIZE }),
+	);
 	// Validating the Form Data with Zod
 	const submission = await parseWithZod(formData, {
-		schema: ProjectEditorSchema.superRefine(async (data, ctx) => {
+		schema: CourseEditorSchema.superRefine(async (data, ctx) => {
 		  if (!data.id) return;
 	  
-		  const project = await prisma.project.findUnique({
+		  const course = await prisma.course.findUnique({
 			select: { id: true },
-			where: { id: data.id, ownerId: userId },
+			where: { id: data.id, userId: userId },
 		  });
 	  
-		  if (!project) {
+		  if (!course) {
 			ctx.addIssue({
 			  code: z.ZodIssueCode.custom,
-			  message: 'Project not found',
+			  message: 'Course not found',
 			});
 		  }
 		}).transform(async ({ images = [], ...data }) => {
-					const projectId = data.id ?? cuid()
 					return {
 						...data,
-						id: projectId,
 						imageUpdates: await Promise.all(
 							images.filter(imageHasId).map(async (i) => {
 								if (imageHasFile(i)) {
 									return {
 										id: i.id,
 										altText: i.altText,
-										objectKey: await uploadProjectImage(userId, projectId, i.file),
+										contentType: i.file.type,
+								blob: Buffer.from(await i.file.arrayBuffer()),
 									}
 								} else {
 									return {
@@ -77,7 +81,8 @@ export async function action({ request }: ActionFunctionArgs) {
 								.map(async (image) => {
 									return {
 										altText: image.altText,
-										objectKey: await uploadProjectImage(userId, projectId, image.file),
+										contentType: image.file.type,
+								blob: Buffer.from(await image.file.arrayBuffer()),
 									}
 								}),
 						),
@@ -88,57 +93,55 @@ export async function action({ request }: ActionFunctionArgs) {
 	  
 	// Handling Validation Errors
 	if (submission.status !== 'success') {
-		return data(
+		return json(
 			{ result: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 }
 		);
 	}
 //storing data in db
 	const {
-		id: projectId,
+		id: courseId,
 		title,
 		description,
-		status, 
-		deadline,
+		level, 
+		duration,
 		imageUpdates = [],
 		newImages = [],
 	} = submission.value;
 	
-	// Upserting the Project (Create or Update)
-	const updatedProject = await prisma.project.upsert({
-		select: { id: true, owner: { select: { username: true } } },
-		where: { id: projectId },
+	// Upserting the Course (Create or Update)
+	const updatedCourse = await prisma.course.upsert({
+		select: { id: true, user: { select: { username: true } } },
+		where: { id: courseId ?? '__new_course__' },
 		create: {
-			id: projectId,
+			id: courseId,
 			ownerId: userId,
 			title,
 			description,
-			status, 
-			deadline,
+			level, 
+			duration,
 			images: { create: newImages },
 		},
 		update: {
 			title,
 			description,
-			status, // ✅ Fix: Ensure `status` is updated properly
-			deadline,
+			level, 
+			duration,
 			images: {
 				deleteMany: {
 					id: { notIn: imageUpdates.map((i) => i.id) },
 				},								
 				updateMany: imageUpdates.map((updates) => ({
 					where: { id: updates.id },
-					data: {
-						altText: updates.altText,
-						objectKey: updates.objectKey,
-					},
+					data: { ...updates, id: updates.blob ? cuid() : updates.id },
 				})),
-				
 				create: newImages,
 			},
 		},
 	});
 
-	return redirect(`/users/${updatedProject.owner!.username}/projects/${updatedProject.id}`);
+	return redirect(`/users/${updatedCourse.owner!.username}/courses/${updatedCourse.id}`,
+
+	);
 }
 

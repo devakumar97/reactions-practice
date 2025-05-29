@@ -1,21 +1,22 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { json, type LoaderFunctionArgs } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
-import { type Route } from './+types/projects.$projectId_.edit.ts'
-import { ProjectEditor } from './__course-editor.tsx'
+import { CourseEditor } from './__course-editor.tsx'
 
 export { action } from './__course-editor.server.tsx'
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
-	const project = await prisma.project.findFirst({
+	const course = await prisma.course.findFirst({
 		select: {
 			id: true,
 			title: true,
 			description: true,
-			status: true,
-			deadline: true,
+			level: true,
+			duration: true,
 			images: {
 				select: {
 					id: true,
@@ -25,19 +26,17 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 			},
 		},
 		where: {
-			id: params.projectId,
-			ownerId: userId,
+			id: params.courseId,
+			userId: userId,
 		},
 	})
-	invariantResponse(project, 'Project not found', { status: 404 })
-	return { project }
+	invariantResponse(course, 'Course not found', { status: 404 })
+	return json({ course: course })
 }
 
-export default function ProjectEdit({
-	loaderData,
-	actionData,
-}: Route.ComponentProps) {
-	return <ProjectEditor project={loaderData.project} actionData={actionData} />
+export default function CourseEdit() {
+	const data = useLoaderData<typeof loader>()
+	return <CourseEditor course={data.course} />
 }
 
 export function ErrorBoundary() {
@@ -45,7 +44,7 @@ export function ErrorBoundary() {
 		<GeneralErrorBoundary
 			statusHandlers={{
 				404: ({ params }) => (
-					<p>No project with the id "{params.projectId}" exists</p>
+					<p>No course with the id "{params.courseId}" exists</p>
 				),
 			}}
 		/>

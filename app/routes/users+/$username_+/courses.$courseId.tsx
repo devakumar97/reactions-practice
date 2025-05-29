@@ -1,10 +1,19 @@
 import { getFormProps, useForm } from '@conform-to/react' 
 import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
+import {
+	json,
+	type LoaderFunctionArgs,
+	type ActionFunctionArgs,
+} from '@remix-run/node'
+import {
+	Form,
+	Link,
+	useActionData,
+	useLoaderData,
+	type MetaFunction,
+} from '@remix-run/react'
 import { formatDistanceToNow } from 'date-fns'
-import { Img } from 'openimg/react'
-import { useRef, useEffect } from 'react'
-import { data, Form, Link } from 'react-router'
 import { z } from 'zod'
 import { floatingToolbarClassName } from '#app/components/floating-toolbar.tsx'
 import { ErrorList } from '#app/components/forms.tsx'
@@ -12,23 +21,25 @@ import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { prisma } from '#app/utils/db.server.ts'
-import { getProjectImgSrc, useIsPending } from '#app/utils/misc.tsx'
+import { getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
+import { requireUserWithPermission } from '#app/utils/permissions.server.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
-import { useOptionalUser } from '#app/utils/user.ts'
-import { type Route, type Info } from './+types/projects.$projectId.ts'
-import { type Info as projectsInfo } from './+types/projects.ts'
+import { userHasPermission, useOptionalUser } from '#app/utils/user.ts'
+import { type loader as courseLoader } from './courses'
+import { requireUserId } from '#app/utils/auth.server.ts'
+import { useEffect, useRef } from 'react'
+import { DeleteNote } from './notes.$noteId'
 
-// loader Function (Fetching Project Data)
-export async function loader({ params }: Route.LoaderArgs) {
-	const project = await prisma.project.findUnique({
-		where: { id: params.projectId },
+export async function loader({ params }: LoaderFunctionArgs) {
+	const course = await prisma.course.findUnique({
+		where: { id: params.courseId },
 		select: {
 			id: true,
 			title: true,
 			description: true,
-			status: true,
-			deadline: true,
-			ownerId: true,
+			level: true,
+			duration: true,
+			userId: true,
 			updatedAt: true,
 			images: {
 				select: {
@@ -39,57 +50,66 @@ export async function loader({ params }: Route.LoaderArgs) {
 		},
 	})
 
-	invariantResponse(project, 'Project not found', { status: 404 })
+	invariantResponse(course, 'Course not found', { status: 404 })
 
-	const timeAgo = formatDistanceToNow(new Date(project.updatedAt))
+	const date = new Date(course.updatedAt)
+	const timeAgo = formatDistanceToNow(date)
 
-	return { project, timeAgo }
+	return { course, timeAgo }
 }
 
-// action Function (Deleting a Project)
 const DeleteFormSchema = z.object({
-	intent: z.literal('delete-project'),
-	projectId: z.string(),
+	intent: z.literal('delete-course'),
+	courseId: z.string(),
 })
 
 // Processing the Deletion Request
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
+	const userId = await requireUserId(request)
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: DeleteFormSchema })
 
 	if (submission.status !== 'success') {
-		return data(
+		return json(
 			{ result: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		)
 	}
 
-	const { projectId } = submission.value
+	const { courseId } = submission.value
 
-	// Checking Permissions & Deleting the Project
-	const project = await prisma.project.findFirst({
-		select: { id: true, ownerId: true, owner: { select: { username: true } } },
-		where: { id: projectId },
+	const course = await prisma.course.findFirst({
+		select: { id: true, userId: true, user: { select: { username: true } } },
+		where: { id: courseId },
 	})
-	invariantResponse(project, 'Project not found', { status: 404 })
+	invariantResponse(course, 'Course not found', { status: 404 })
 
-	await prisma.project.delete({ where: { id: project.id } })
+	const isOwner = course.userId === userId
+	await requireUserWithPermission(
+		request,
+		isOwner ? `delete:note:own` : `delete:note:any`,
+	)
+
+	await prisma.course.delete({ where: { id: course.id } })
+
+	await prisma.course.delete({ where: { id: course.id } })
 	// Redirecting After Deletion
-	return redirectWithToast(`/users/${project.owner?.username ?? "unknown"}/projects`, {
+	return redirectWithToast(`/users/${course.user?.username ?? "unknown"}/courses`, {
 		type: 'success',
 		title: 'Success',
-		description: 'Your project has been deleted.',
+		description: 'Your course has been deleted.',
 	})
 }
 
-// ProjectRoute Component (Project Details Page)
-export default function ProjectRoute({
-	loaderData,
-	actionData,
-}: Route.ComponentProps) {
+export default function CourseRoute() {
+	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
-	const isOwner = user?.id === loaderData.project.ownerId
-	const displayBar = isOwner
+	const isOwner = user?.id === data.course.userId
+	const canDelete = userHasPermission(
+			user,
+			isOwner ? `delete:note:own` : `delete:note:any`,
+		)
+	const displayBar = canDelete || isOwner
 
 	const sectionRef = useRef<HTMLElement>(null)
 
@@ -97,36 +117,35 @@ export default function ProjectRoute({
 		if (sectionRef.current) {
 			sectionRef.current.focus()
 		}
-	}, [loaderData.project.id])
-	console.log(loaderData.project.images);
+	}, [data.course.id])
+	console.log(data.course.images);
 
-	// Rendering the Project Information
 	return (
 		<section
 			ref={sectionRef}
 			className="absolute inset-0 flex flex-col px-10"
-			aria-labelledby="project-title"
+			aria-labelledby="course-title"
 			tabIndex={-1}
 		>
-			<h2 id="project-title" className="mb-2 pt-12 text-h2 lg:mb-6">
-				{loaderData.project.title}
+			<h2 id="course-title" className="mb-2 pt-12 text-h2 lg:mb-6">
+				{data.course.title}
 			</h2>
 			<div className="flex gap-6">
 
-			<p className="text-sm text-gray-500">Status: {loaderData.project.status ?? 'PENDING'}</p>
-			{loaderData.project.deadline && (
+			<p className="text-sm text-gray-500">level: {data.course.level}</p>
+			{data.course.duration && (
 				<p className="text-sm text-gray-500">
-					Deadline: {new Date(loaderData.project.deadline).toLocaleDateString()}
+					duration: {data.course.duration}
 				</p>
 			)}
 			</div>
 			<div className={`${displayBar ? 'pb-24' : 'pb-12'} overflow-y-auto `}>
 			<ul className="flex flex-wrap gap-5 py-5">
- 			 {loaderData.project.images.map((image) => (
+ 			 {data.course.images.map((image) => (
    				 <li key={image.objectKey}>
-     			 <a href={getProjectImgSrc(image.objectKey)} target="_blank" rel="noopener noreferrer">
-      		  <Img
-				src={getProjectImgSrc(image.objectKey)}
+     			 <a href={getCourseImgSrc(image.objectKey)} target="_blank" rel="noopener noreferrer">
+      		  <img
+				src={getCourseImgSrc(image.objectKey)}
 				alt={image.altText ?? ''}
 				className="h-32 w-32 rounded-lg object-cover"
 				width={512}
@@ -137,7 +156,7 @@ export default function ProjectRoute({
   			))}
 		</ul>
 			<p className="whitespace-break-spaces text-sm md:text-lg">
-				{loaderData.project.description}
+				{data.course.description}
 				</p>
 			</div>
 			
@@ -145,11 +164,11 @@ export default function ProjectRoute({
 				<div className={floatingToolbarClassName}>
 					<span className="text-sm text-foreground/90 max-[524px]:hidden">
 						<Icon name="clock" className="scale-125">
-							{loaderData.timeAgo} ago
+							{data.timeAgo} ago
 						</Icon>
 					</span>
 					<div className="grid flex-1 grid-cols-2 justify-end gap-2 min-[525px]:flex md:gap-4">
-						{<DeleteProject id={loaderData.project.id} actionData={actionData} />}
+						{canDelete ? <DeleteNote id={data.course.id} /> : null}
 						<Button asChild>
 							<Link to="edit">
 								<Icon name="pencil-1" className="scale-125 max-md:scale-150">
@@ -164,24 +183,22 @@ export default function ProjectRoute({
 	)
 }
 
-// DeleteProject Component (Project Deletion Form)
-export function DeleteProject({
+export function DeleteCourse({
 	id,
-	actionData,
 }: {
 	id: string
-	actionData: Info['actionData'] | undefined
 }) {
+	const actionData = useActionData<typeof action>()
 	const isPending = useIsPending()
-	const [form] = useForm({ id: 'delete-project', lastResult: actionData?.result })
+	const [form] = useForm({ id: 'delete-course', lastResult: actionData?.result })
 	// Rendering the Delete Button
 	return (
 		<Form method="POST" {...getFormProps(form)}>
-			<input type="hidden" name="projectId" value={id} />
+			<input type="hidden" name="courseId" value={id} />
 			<StatusButton
 				type="submit"
 				name="intent"
-				value="delete-project"
+				value="delete-course"
 				variant="destructive"
 				status={isPending ? 'pending' : (form.status ?? 'idle')}
 				disabled={isPending}
@@ -195,16 +212,18 @@ export function DeleteProject({
 	)
 }
 
-export const meta: Route.MetaFunction = ({ data, params, matches }) => {
-	const projectsMatch = matches.find((m) => m?.id === 'routes/users+/$username_+/projects') as
-		| { data: projectsInfo['loaderData'] }
-		| undefined
+export const meta: MetaFunction<typeof loader,
+	{ 'routes/users+/$username_+/course': typeof courseLoader }
+> = ({ data, params, matches }) => {
+	const coursesMatch = matches.find(
+		(m) => m.id === 'routes/users+/$username_+/course',
+	)
 
-	const displayName = projectsMatch?.data?.owner?.name ?? params.username
-	const projectTitle = data?.project?.title ?? 'Project'
+	const displayName = coursesMatch?.data?.owner?.name ?? params.username
+	const courseTitle = data?.course?.title ?? 'Course'
 
 	return [
-		{ title: `${projectTitle} | ${displayName}'s Projects | Epic Projects` },
-		{ name: 'description', content: data?.project?.description ?? 'No description available' },
+		{ title: `${courseTitle} | ${displayName}'s Courses | Course` },
+		{ name: 'description', content: data?.course?.description ?? 'No description available' },
 	]
 }

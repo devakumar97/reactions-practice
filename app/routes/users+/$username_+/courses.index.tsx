@@ -1,5 +1,5 @@
-import { type Route } from './+types/projects.index.ts'
-import { type Info as projectsInfo } from './+types/projects.ts'
+import { type MetaFunction } from '@remix-run/react'
+import { type loader as coursesLoader } from './courses.tsx'
 
 export default function ProjectsIndexRoute() {
 	return (
@@ -9,20 +9,23 @@ export default function ProjectsIndexRoute() {
 	)
 }
 
-export const meta: Route.MetaFunction = ({ params, matches }) => {
-	const projectsMatch = matches.find(
-		(m) => m?.id === 'routes/users+/$username_+/projects',
-	) as { data: projectsInfo['loaderData'] }
+export const meta: MetaFunction<
+	null,
+	{ 'routes/users+/$username_+/courses': typeof coursesLoader }
+> = ({ params, matches }) => {
+	const coursesMatch = matches.find(
+		(m) => m?.id === 'routes/users+/$username_+/courses',
+	)
 
-	const displayName = projectsMatch?.data?.owner.name ?? params.username
-	const projectCount = projectsMatch?.data?.owner.projects.length ?? 0
-	const projectsText = projectCount === 1 ? 'project' : 'projects'
+	const displayName = coursesMatch?.data?.owner.name ?? params.username
+	const courseCount = coursesMatch?.data?.owner.courses.length ?? 0
+	const coursesText = courseCount === 1 ? 'course' : 'courses'
 
 	return [
-		{ title: `${displayName}'s Projects | Epic Projects` },
+		{ title: `${displayName}'s Courses | Courses` },
 		{
 			name: 'description',
-			content: `Check out ${displayName}'s ${projectCount} ${projectsText} on Epic Projects`,
+			content: `Check out ${displayName}'s ${courseCount} ${coursesText} on Epic Projects`,
 		},
 	]
 }

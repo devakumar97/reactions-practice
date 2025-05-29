@@ -1,12 +1,12 @@
 import { requireUserId } from '#app/utils/auth.server.ts'
-import { type Route } from './+types/projects.new.ts'
-import { ProjectEditor } from './__course-editor.tsx'
+import { json,LoaderFunctionArgs } from '@remix-run/node'
+import { CourseEditor } from './__course-editor.tsx'
 
-export { action } from './__course-editor.server.tsx' // Handle project creation
+export { action } from './__course-editor.server.tsx' // Handle course creation
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserId(request)
-	return {}
+	return json({})
 }
 
-export default ProjectEditor
+export default CourseEditor
