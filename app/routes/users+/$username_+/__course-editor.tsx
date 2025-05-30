@@ -27,7 +27,9 @@ import { type action } from './__course-editor.server'
 const titleMinLength = 1
 const titleMaxLength = 100
 const descriptionMinLength = 1
-const descriptionMaxLength = 5000
+const descriptionMaxLength = 500
+const contentMinLength = 1
+const contentMaxLength = 20000
 
 export const MAX_UPLOAD_SIZE = 1024 * 1024 * 3; // 3MB
 
@@ -48,6 +50,8 @@ export const CourseEditorSchema = z.object({
 	id: z.string().optional(),
 	title: z.string().min(titleMinLength).max(titleMaxLength),
 	description: z.string().min(descriptionMinLength).max(descriptionMaxLength),
+	content: z.string().min(contentMinLength).max(contentMaxLength),
+	language: z.enum(['ENGLISH', 'FRENCH', 'SPANISH']),
 	level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
 	duration: z.number().int(),
 	images: z.array(ImageFieldsetSchema).max(5).optional(),
@@ -57,7 +61,7 @@ export function CourseEditor({
 	course,
 }: {
 	course?: SerializeFrom<
-			Pick<Course, 'id' | 'title' | 'description' | 'level' | 'duration'> & {
+			Pick<Course, 'id' | 'title' | 'description' | 'content' | 'language' | 'level' | 'duration'> & {
 				images: Array<Pick<CourseImage, 'id' | 'altText'>>
 			}
 		>
@@ -76,6 +80,8 @@ export function CourseEditor({
 			id: course?.id ?? '',
 			title: course?.title ?? '' ,
 			description: course?.description ?? '',
+			content: course?.content ?? '',
+			language: course?.language,
 			level: course?.level,
 			duration: course?.duration,
 			images: course?.images?.map((img) => ({
@@ -105,19 +111,38 @@ export function CourseEditor({
 							inputProps={{ autoFocus: true, ...getInputProps(fields.title, { type: 'text' }) }}
 							errors={fields.title.errors}
 						/>
-						<TextareaField
+						<Field
 							labelProps={{ children: 'Description' }}
-							textareaProps={{ ...getTextareaProps(fields.description) }}
+							inputProps={{ ...getInputProps(fields.description, { type: 'text' }) }}
 							errors={fields.description.errors}
+						/>
+						<TextareaField
+							labelProps={{ children: 'Content' }}
+							textareaProps={{ ...getTextareaProps(fields.content) }}
+							errors={fields.content.errors}
 						/>
 						<Field
 							labelProps={{ children: 'duration' }}
 							inputProps={{
 							defaultValue: course?.duration,
-							...getInputProps(fields.duration,{ type: 'text' }), 
+							...getInputProps(fields.duration,{ type: 'number' }), 
 							}}
 							errors={fields.duration.errors}
 							/>
+						<DropdownField 
+							labelProps={{ children: 'Language' }}
+							selectProps={{
+							name: 'language',
+							defaultValue: course?.language, 
+							children: (
+							<>
+								<option value="ENGLISH">ENGLISH</option>
+								<option value="FRENCH">FRENCH</option>
+								<option value="SPANISH">SPANISH</option>
+							</>
+					),
+				}}
+			/>
 						<DropdownField 
 							labelProps={{ children: 'Level' }}
 							selectProps={{

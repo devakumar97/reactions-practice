@@ -20,15 +20,13 @@ import { ErrorList } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
+import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
 import { requireUserWithPermission } from '#app/utils/permissions.server.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { userHasPermission, useOptionalUser } from '#app/utils/user.ts'
 import { type loader as courseLoader } from './courses'
-import { requireUserId } from '#app/utils/auth.server.ts'
-import { useEffect, useRef } from 'react'
-import { DeleteNote } from './notes.$noteId'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const course = await prisma.course.findUnique({
@@ -37,14 +35,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
 			id: true,
 			title: true,
 			description: true,
+			content: true,
+			language:true,
 			level: true,
 			duration: true,
-			userId: true,
+			ownerId: true,
 			updatedAt: true,
 			images: {
 				select: {
+					id: true,
 					altText: true,
-					objectKey: true,
 				},
 			},
 		},
@@ -55,7 +55,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	const date = new Date(course.updatedAt)
 	const timeAgo = formatDistanceToNow(date)
 
-	return { course, timeAgo }
+	return json({ course, timeAgo })
 }
 
 const DeleteFormSchema = z.object({
@@ -79,22 +79,21 @@ export async function action({ request }: ActionFunctionArgs) {
 	const { courseId } = submission.value
 
 	const course = await prisma.course.findFirst({
-		select: { id: true, userId: true, user: { select: { username: true } } },
+		select: { id: true, ownerId: true, owner: { select: { username: true } } },
 		where: { id: courseId },
 	})
 	invariantResponse(course, 'Course not found', { status: 404 })
 
-	const isOwner = course.userId === userId
+	const isOwner = course.ownerId === userId
 	await requireUserWithPermission(
 		request,
-		isOwner ? `delete:note:own` : `delete:note:any`,
+		isOwner ? `delete:course:own` : `delete:course:any`,
 	)
 
 	await prisma.course.delete({ where: { id: course.id } })
 
-	await prisma.course.delete({ where: { id: course.id } })
 	// Redirecting After Deletion
-	return redirectWithToast(`/users/${course.user?.username ?? "unknown"}/courses`, {
+	return redirectWithToast(`/users/${course.owner.username}/courses`, {
 		type: 'success',
 		title: 'Success',
 		description: 'Your course has been deleted.',
@@ -104,48 +103,55 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function CourseRoute() {
 	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
-	const isOwner = user?.id === data.course.userId
+	const isOwner = user?.id === data.course.ownerId
+	console.log('data.course.ownerId', data.course.ownerId)
+
 	const canDelete = userHasPermission(
 			user,
-			isOwner ? `delete:note:own` : `delete:note:any`,
+			isOwner ? `delete:course:own` : `delete:course:any`, 
 		)
+		// console.log(user, isOwner, canDelete)
+		// console.log('canDelete:', canDelete, typeof canDelete);
+
 	const displayBar = canDelete || isOwner
 
-	const sectionRef = useRef<HTMLElement>(null)
+	// const sectionRef = useRef<HTMLElement>(null)
 
-	useEffect(() => {
-		if (sectionRef.current) {
-			sectionRef.current.focus()
-		}
-	}, [data.course.id])
-	console.log(data.course.images);
+	// useEffect(() => {
+	// 	if (sectionRef.current) {
+	// 		sectionRef.current.focus()
+	// 	}
+	// }, [data.course.id])
+	// console.log(data.course.images);
 
 	return (
-		<section
-			ref={sectionRef}
-			className="absolute inset-0 flex flex-col px-10"
-			aria-labelledby="course-title"
-			tabIndex={-1}
-		>
+		// <section
+		// 	ref={sectionRef}
+		// 	className="absolute inset-0 flex flex-col px-10"
+		// 	aria-labelledby="course-title"
+		// 	tabIndex={-1}
+		// >
+			<div className="absolute inset-0 flex flex-col px-10">
 			<h2 id="course-title" className="mb-2 pt-12 text-h2 lg:mb-6">
 				{data.course.title}
 			</h2>
 			<div className="flex gap-6">
 
-			<p className="text-sm text-gray-500">level: {data.course.level}</p>
+			<p className="text-sm text-gray-500">Language: {data.course.language}</p>
+			<p className="text-sm text-gray-500">Level: {data.course.level}</p>
 			{data.course.duration && (
 				<p className="text-sm text-gray-500">
-					duration: {data.course.duration}
+					Duration: {data.course.duration} minutes
 				</p>
 			)}
 			</div>
 			<div className={`${displayBar ? 'pb-24' : 'pb-12'} overflow-y-auto `}>
 			<ul className="flex flex-wrap gap-5 py-5">
  			 {data.course.images.map((image) => (
-   				 <li key={image.objectKey}>
-     			 <a href={getCourseImgSrc(image.objectKey)} target="_blank" rel="noopener noreferrer">
+   				 <li key={image.id}>
+     			 <a href={getCourseImgSrc(image.id)} target="_blank" rel="noopener noreferrer">
       		  <img
-				src={getCourseImgSrc(image.objectKey)}
+				src={getCourseImgSrc(image.id)}
 				alt={image.altText ?? ''}
 				className="h-32 w-32 rounded-lg object-cover"
 				width={512}
@@ -155,9 +161,26 @@ export default function CourseRoute() {
     		</li>
   			))}
 		</ul>
-			<p className="whitespace-break-spaces text-sm md:text-lg">
+		<div className="space-y-4">
+			<div className="">
+				<label className="block text-sm font-semibold text-muted-foreground mb-1">
+      			Description:
+				</label>
+			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.description}
 				</p>
+				</div>
+			</div>
+		<div className="space-y-4">
+			<div className="">
+				<label className="block text-sm font-semibold text-muted-foreground mb-1">
+      			Content:
+				</label>
+			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
+				{data.course.content}
+				</p>
+				</div>
+			</div>
 			</div>
 			
 			{displayBar && (
@@ -168,7 +191,8 @@ export default function CourseRoute() {
 						</Icon>
 					</span>
 					<div className="grid flex-1 grid-cols-2 justify-end gap-2 min-[525px]:flex md:gap-4">
-						{canDelete ? <DeleteNote id={data.course.id} /> : null}
+				
+						{(canDelete) ? <DeleteCourse id={data.course.id} /> : null}
 						<Button asChild>
 							<Link to="edit">
 								<Icon name="pencil-1" className="scale-125 max-md:scale-150">
@@ -179,19 +203,19 @@ export default function CourseRoute() {
 					</div>
 				</div>
 			)}
-		</section>
+			</div>
+		// </section>
 	)
 }
 
-export function DeleteCourse({
-	id,
-}: {
-	id: string
-}) {
+export function DeleteCourse({ id }: { id: string }) {
 	const actionData = useActionData<typeof action>()
 	const isPending = useIsPending()
-	const [form] = useForm({ id: 'delete-course', lastResult: actionData?.result })
-	// Rendering the Delete Button
+	const [form] = useForm({
+		id: 'delete-course',
+		lastResult: actionData?.result,
+	})
+
 	return (
 		<Form method="POST" {...getFormProps(form)}>
 			<input type="hidden" name="courseId" value={id} />
@@ -202,6 +226,7 @@ export function DeleteCourse({
 				variant="destructive"
 				status={isPending ? 'pending' : (form.status ?? 'idle')}
 				disabled={isPending}
+				className="w-full max-md:aspect-square max-md:px-0"
 			>
 				<Icon name="trash" className="scale-125 max-md:scale-150">
 					<span className="max-md:hidden">Delete</span>

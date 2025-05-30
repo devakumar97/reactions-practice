@@ -11,6 +11,7 @@ import {
 import { Input } from './ui/input.tsx'
 import { Label } from './ui/label.tsx'
 import { Textarea } from './ui/textarea.tsx'
+import { cn } from '#app/utils/misc.tsx'
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined
 
@@ -82,13 +83,17 @@ export function DropdownField({
 		<div className={className}>
 			{/* Label */}
 			<Label htmlFor={id} {...labelProps} />
-<br/>
+			<br />
+
 			{/* Dropdown (Select) */}
 			<select
 				id={id}
-				aria-invalid={errorId ? true : undefined}
+				aria-invalid={errorId ? "true" : undefined}
 				aria-describedby={errorId}
-				className="border rounded px-3 py-2"
+				className={cn(
+					"rounded-md border border-border bg-background text-foreground px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring",
+					selectProps.className
+				)}
 				{...selectProps}
 			>
 				{selectProps.children}
@@ -101,6 +106,7 @@ export function DropdownField({
 		</div>
 	)
 }
+
 export function OTPField({
 	labelProps,
 	inputProps,

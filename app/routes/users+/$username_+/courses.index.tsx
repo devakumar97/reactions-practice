@@ -1,10 +1,10 @@
 import { type MetaFunction } from '@remix-run/react'
 import { type loader as coursesLoader } from './courses.tsx'
 
-export default function ProjectsIndexRoute() {
+export default function CoursesIndexRoute() {
 	return (
 		<div className="container pt-12">
-			<p className="text-body-md">Select a project</p>
+			<p className="text-body-md">Select a course</p>
 		</div>
 	)
 }
@@ -25,7 +25,7 @@ export const meta: MetaFunction<
 		{ title: `${displayName}'s Courses | Courses` },
 		{
 			name: 'description',
-			content: `Check out ${displayName}'s ${courseCount} ${coursesText} on Epic Projects`,
+			content: `Check out ${displayName}'s ${courseCount} ${coursesText} on my courses`,
 		},
 	]
 }

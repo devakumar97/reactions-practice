@@ -301,17 +301,35 @@ console.timeEnd('🔐 Created permissions and assigned to roles')
 			courses: {
         create: [{
           title: 'Intro to Eucalyptus Studies',
-          description: 'Understand the biology and ecology of eucalyptus trees.',
+		  description:'Eucalyptus studies',
+          content: 'Understand the biology and ecology of eucalyptus trees.',
           level: 'BEGINNER',
           duration: 90,
           language: 'English',
           images: {
             create: [{
-              objectKey: 'course-intro-koala',
+              contentType: 'course-intro-koala',
               altText: 'eucalyptus course image',
+			  blob: Buffer.from('mock-image-content'),
             }]
           }
-        }]
+        },
+        {
+          title: 'Intro to Eucalyptus Studies',
+		  description:'Eucalyptus studies',
+          content: 'Understand the biology and ecology of eucalyptus trees.',
+          level: 'BEGINNER',
+          duration: 90,
+          language: 'English',
+          images: {
+            create: [{
+              contentType: 'course-intro-koala',
+              altText: 'eucalyptus course image',
+			  blob: Buffer.from('mock-image-content'),
+            }]
+          }
+        },
+	]
       }
 		},
 	})

@@ -15,19 +15,21 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 			id: true,
 			title: true,
 			description: true,
+			content: true,
+			language:true,
 			level: true,
 			duration: true,
 			images: {
 				select: {
 					id: true,
 					altText: true,
-					objectKey: true,
+					contentType: true,
 				},
 			},
 		},
 		where: {
 			id: params.courseId,
-			userId: userId,
+			ownerId: userId,
 		},
 	})
 	invariantResponse(course, 'Course not found', { status: 404 })

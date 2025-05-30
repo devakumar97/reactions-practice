@@ -56,12 +56,13 @@ CREATE TABLE "Course" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
     "level" "CourseLevel" NOT NULL,
     "duration" INTEGER NOT NULL,
     "language" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT,
+    "ownerId" TEXT,
 
     CONSTRAINT "Course_pkey" PRIMARY KEY ("id")
 );
@@ -70,7 +71,8 @@ CREATE TABLE "Course" (
 CREATE TABLE "CourseImage" (
     "id" TEXT NOT NULL,
     "altText" TEXT,
-    "objectKey" TEXT NOT NULL,
+    "contentType" TEXT NOT NULL,
+    "blob" BYTEA NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "courseId" TEXT NOT NULL,
@@ -178,10 +180,10 @@ CREATE INDEX "NoteImage_noteId_idx" ON "NoteImage"("noteId");
 CREATE UNIQUE INDEX "UserImage_userId_key" ON "UserImage"("userId");
 
 -- CreateIndex
-CREATE INDEX "Course_userId_idx" ON "Course"("userId");
+CREATE INDEX "Course_ownerId_idx" ON "Course"("ownerId");
 
 -- CreateIndex
-CREATE INDEX "Course_userId_updatedAt_idx" ON "Course"("userId", "updatedAt");
+CREATE INDEX "Course_ownerId_updatedAt_idx" ON "Course"("ownerId", "updatedAt");
 
 -- CreateIndex
 CREATE INDEX "CourseImage_courseId_idx" ON "CourseImage"("courseId");
@@ -226,7 +228,7 @@ ALTER TABLE "NoteImage" ADD CONSTRAINT "NoteImage_noteId_fkey" FOREIGN KEY ("not
 ALTER TABLE "UserImage" ADD CONSTRAINT "UserImage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Course" ADD CONSTRAINT "Course_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Course" ADD CONSTRAINT "Course_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CourseImage" ADD CONSTRAINT "CourseImage_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE CASCADE ON UPDATE CASCADE;

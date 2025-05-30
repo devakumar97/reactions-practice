@@ -45,7 +45,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	  
 		  const course = await prisma.course.findUnique({
 			select: { id: true },
-			where: { id: data.id, userId: userId },
+			where: { id: data.id, ownerId: userId },
 		  });
 	  
 		  if (!course) {
@@ -80,7 +80,7 @@ export async function action({ request }: ActionFunctionArgs) {
 								.filter((i) => !i.id)
 								.map(async (image) => {
 									return {
-										altText: image.altText,
+										altText: image.altText ?? null,
 										contentType: image.file.type,
 								blob: Buffer.from(await image.file.arrayBuffer()),
 									}
@@ -103,6 +103,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		id: courseId,
 		title,
 		description,
+		content,
+		language,
 		level, 
 		duration,
 		imageUpdates = [],
@@ -111,13 +113,15 @@ export async function action({ request }: ActionFunctionArgs) {
 	
 	// Upserting the Course (Create or Update)
 	const updatedCourse = await prisma.course.upsert({
-		select: { id: true, user: { select: { username: true } } },
+		select: { id: true, owner: { select: { username: true } } },
 		where: { id: courseId ?? '__new_course__' },
 		create: {
 			id: courseId,
 			ownerId: userId,
 			title,
 			description,
+			content,
+			language, 
 			level, 
 			duration,
 			images: { create: newImages },
@@ -125,6 +129,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		update: {
 			title,
 			description,
+			content,
+			language,
 			level, 
 			duration,
 			images: {

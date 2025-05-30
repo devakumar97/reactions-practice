@@ -25,7 +25,7 @@ model User {
   roles       Role[]
   sessions    Session[]
   connections Connection[]
-  courses      Course[]
+  courses     Course[]
 }
 
 model Note {
@@ -80,26 +80,28 @@ model Course {
   id          String      @id @default(cuid())
   title       String
   description String
+  content     String
   level       CourseLevel
-  duration    Int // Duration in minutes
+  duration    Int
   language    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String?
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ownerId String
 
   images CourseImage[]
 
-  @@index([userId])
-  @@index([userId, updatedAt])
+  @@index([ownerId])
+  @@index([ownerId, updatedAt])
 }
 
 model CourseImage {
-  id        String  @id @default(cuid())
-  altText   String?
-  objectKey String
+  id          String  @id @default(cuid())
+  altText     String?
+  contentType String
+  blob        Bytes
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
