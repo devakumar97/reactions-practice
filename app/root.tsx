@@ -58,8 +58,8 @@ import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
 import { useOptionalUser, useUser } from './utils/user.ts'
 import {i18n, useChangeLanguage} from './utils/i18n.ts'
-import { i18next } from './utils/i18next.server.ts'
 import { useTranslation } from 'react-i18next'
+import { getLanguage } from './utils/language-server.ts'
 
 export const links: LinksFunction = () => {
 	return [
@@ -95,7 +95,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		type: 'getUserId',
 		desc: 'getUserId in root',
 	})
-	const locale = await i18next.getLocale(request)
+	const locale = await getLanguage(request)
 	const user = userId
 		? await time(
 				() =>

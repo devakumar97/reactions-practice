@@ -48,10 +48,10 @@ export type ImageFieldset = z.infer<typeof ImageFieldsetSchema>
 
 export const CourseEditorSchema = z.object({
 	id: z.string().optional(),
+	languageId: z.string().min(2).max(5), // e.g., "en", "fr"
 	title: z.string().min(titleMinLength).max(titleMaxLength),
 	description: z.string().min(descriptionMinLength).max(descriptionMaxLength),
 	content: z.string().min(contentMinLength).max(contentMaxLength),
-	language: z.enum(['ENGLISH', 'FRENCH', 'SPANISH']),
 	level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
 	duration: z.number().int(),
 	images: z.array(ImageFieldsetSchema).max(5).optional(),
@@ -61,10 +61,17 @@ export function CourseEditor({
 	course,
 }: {
 	course?: SerializeFrom<
-			Pick<Course, 'id' | 'title' | 'description' | 'content' | 'language' | 'level' | 'duration'> & {
-				images: Array<Pick<CourseImage, 'id' | 'altText'>>
-			}
-		>
+	Pick<Course, 'id' | 'duration'> & {
+		images: Array<Pick<CourseImage, 'id' | 'altText'>>
+		translation: {
+			languageId: string
+			title: string
+			description: string
+			content: string
+			level:string
+		} | null
+	}
+>
 }) {
 	const actionData = useActionData<typeof action>()
 	const isPending = useIsPending()
@@ -77,17 +84,14 @@ export function CourseEditor({
 			return parseWithZod(formData, { schema: CourseEditorSchema })
 		},
 		defaultValue: {
-			id: course?.id ?? '',
-			title: course?.title ?? '' ,
-			description: course?.description ?? '',
-			content: course?.content ?? '',
-			language: course?.language,
-			level: course?.level,
+			id: course?.id,
 			duration: course?.duration,
-			images: course?.images?.map((img) => ({
-			  ...img,
-			  file: undefined,
-			})) ?? [],
+			languageId: course?.translation?.languageId ?? 'en',
+			title: course?.translation?.title ?? '',
+			description: course?.translation?.description ?? '',
+			content: course?.translation?.content ?? '',
+			level: course?.translation?.level ?? '',
+			images: course?.images ?? [{}],
 		  },
 		  
 		shouldRevalidate: 'onBlur',
@@ -122,23 +126,23 @@ export function CourseEditor({
 							errors={fields.content.errors}
 						/>
 						<Field
-							labelProps={{ children: 'duration' }}
+							labelProps={{ children: 'Duration (in mins)' }}
 							inputProps={{
 							defaultValue: course?.duration,
-							...getInputProps(fields.duration,{ type: 'number' }), 
+							...getInputProps(fields.duration,{ type: 'number' }),
 							}}
 							errors={fields.duration.errors}
 							/>
 						<DropdownField 
 							labelProps={{ children: 'Language' }}
 							selectProps={{
-							name: 'language',
-							defaultValue: course?.language, 
+							name: 'languageId',
+							defaultValue: course?.translation?.languageId ?? 'en',
 							children: (
 							<>
-								<option value="ENGLISH">ENGLISH</option>
-								<option value="FRENCH">FRENCH</option>
-								<option value="SPANISH">SPANISH</option>
+								<option value="en">English</option>
+								<option value="fr">French</option>
+								<option value="es">Spanish</option>
 							</>
 					),
 				}}
@@ -147,7 +151,7 @@ export function CourseEditor({
 							labelProps={{ children: 'Level' }}
 							selectProps={{
 							name: 'level',
-							defaultValue: course?.level, 
+							defaultValue: course?.translation?.level, 
 							children: (
 							<>
 								<option value="BEGINNER">BEGINNER</option>

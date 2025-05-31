@@ -1,4 +1,4 @@
-
+//course-editor.server.tsx
 import { parseWithZod } from '@conform-to/zod'
 import { createId as cuid } from '@paralleldrive/cuid2'
 import {
@@ -33,6 +33,8 @@ function imageHasId(
 
 // Main action Function
 export async function action({ request }: ActionFunctionArgs) {
+	  console.log('Action triggered')
+
 	const userId = await requireUserId(request);
 	// Parsing the Form Data
 	const formData = await parseMultipartFormData(request, 
@@ -44,9 +46,25 @@ export async function action({ request }: ActionFunctionArgs) {
 		  if (!data.id) return;
 	  
 		  const course = await prisma.course.findUnique({
-			select: { id: true },
-			where: { id: data.id, ownerId: userId },
-		  });
+			select: {
+			id: true,
+			translation: {
+			  where: {
+				languageId: data.languageId, // Make sure you are using the correct languageId here
+			  },
+			  select: {
+				title: true,
+				description: true,
+				content: true,
+				level: true,
+			  },
+			},
+		  },
+		  where: {
+			id: data.id,
+			ownerId: userId,
+		  },
+		});
 	  
 		  if (!course) {
 			ctx.addIssue({
@@ -104,7 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		title,
 		description,
 		content,
-		language,
+		languageId,
 		level, 
 		duration,
 		imageUpdates = [],
@@ -118,20 +136,10 @@ export async function action({ request }: ActionFunctionArgs) {
 		create: {
 			id: courseId,
 			ownerId: userId,
-			title,
-			description,
-			content,
-			language, 
-			level, 
 			duration,
 			images: { create: newImages },
 		},
 		update: {
-			title,
-			description,
-			content,
-			language,
-			level, 
 			duration,
 			images: {
 				deleteMany: {
@@ -144,6 +152,29 @@ export async function action({ request }: ActionFunctionArgs) {
 				create: newImages,
 			},
 		},
+	});
+
+	await prisma.courseTranslation.upsert({
+	  where: {
+		courseId_languageId: {
+		  courseId: updatedCourse.id,
+		  languageId,
+		},
+	  },
+	  create: {
+		courseId: updatedCourse.id,
+		languageId,
+		title,
+		description,
+		content,
+		level
+	  },
+	  update: {
+		title,
+		description,
+		content,
+		level
+	  },
 	});
 
 	return redirect(`/users/${updatedCourse.owner!.username}/courses/${updatedCourse.id}`,

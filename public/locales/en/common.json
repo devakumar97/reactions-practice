@@ -47,11 +47,5 @@
 			"connect": "Connect"
 		},
 		"actionWithProvider": "{{type}} with {{label}}"
-	},
-	"projects": {
-		"status": "Status",
-		"deadline": "Deadline",
-		"ago": "ago",
-		"edit": "Edit"
 	}
 }

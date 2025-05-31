@@ -27,17 +27,16 @@ import { requireUserWithPermission } from '#app/utils/permissions.server.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
 import { userHasPermission, useOptionalUser } from '#app/utils/user.ts'
 import { type loader as courseLoader } from './courses'
+import { getLanguage } from '#app/utils/language-server.ts'
+import { useTranslation } from 'react-i18next'
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const lang = await getLanguage(request)
+
 	const course = await prisma.course.findUnique({
 		where: { id: params.courseId },
 		select: {
 			id: true,
-			title: true,
-			description: true,
-			content: true,
-			language:true,
-			level: true,
 			duration: true,
 			ownerId: true,
 			updatedAt: true,
@@ -45,6 +44,20 @@ export async function loader({ params }: LoaderFunctionArgs) {
 				select: {
 					id: true,
 					altText: true,
+				},
+			},
+			translation: {
+				where: {
+					languageId: lang,
+				  },
+				select: {
+					title: true,
+					description: true,
+					content: true,
+					level: true,
+					language: {
+						select: { id: true },
+					},
 				},
 			},
 		},
@@ -55,7 +68,19 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	const date = new Date(course.updatedAt)
 	const timeAgo = formatDistanceToNow(date)
 
-	return json({ course, timeAgo })
+	const translation = course.translation[0]
+
+	return json({
+		course: {
+			...course,
+			title: translation?.title || "No title available",
+			description: translation?.description || "No description available",
+			content: translation?.content || "No content available",
+			level: translation?.level || "No level available",
+			language: translation?.language?.id || "Unknown",
+		},
+		timeAgo,
+	})
 }
 
 const DeleteFormSchema = z.object({
@@ -103,8 +128,11 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function CourseRoute() {
 	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
+	console.log('user:', user)
+
 	const isOwner = user?.id === data.course.ownerId
-	console.log('data.course.ownerId', data.course.ownerId)
+console.log('data.course.ownerId', data.course.ownerId)
+	const {t} = useTranslation()
 
 	const canDelete = userHasPermission(
 			user,
@@ -112,6 +140,9 @@ export default function CourseRoute() {
 		)
 		// console.log(user, isOwner, canDelete)
 		// console.log('canDelete:', canDelete, typeof canDelete);
+console.log('user:', user)
+console.log('isOwner:', isOwner)
+console.log('canDelete:', canDelete)
 
 	const displayBar = canDelete || isOwner
 
@@ -187,16 +218,16 @@ export default function CourseRoute() {
 				<div className={floatingToolbarClassName}>
 					<span className="text-sm text-foreground/90 max-[524px]:hidden">
 						<Icon name="clock" className="scale-125">
-							{data.timeAgo} ago
+							{data.timeAgo} {t('ago')}
 						</Icon>
 					</span>
 					<div className="grid flex-1 grid-cols-2 justify-end gap-2 min-[525px]:flex md:gap-4">
 				
-						{(canDelete) ? <DeleteCourse id={data.course.id} /> : null}
+						{(canDelete || isOwner) && <DeleteCourse id={data.course.id} />}
 						<Button asChild>
 							<Link to="edit">
 								<Icon name="pencil-1" className="scale-125 max-md:scale-150">
-									<span className="max-md:hidden">Edit</span>
+									<span className="max-md:hidden">{t('edit')}</span>
 								</Icon>
 							</Link>
 						</Button>

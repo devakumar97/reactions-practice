@@ -6,22 +6,46 @@ import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { cn, getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
+import { getLanguage } from '#app/utils/language-server.ts'
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ request,params }: LoaderFunctionArgs) {
+	const lang = await getLanguage(request)
+	
 	const owner = await prisma.user.findFirst({
 		select: {
 			id: true,
 			name: true,
 			username: true,
 			image: { select: { id: true } },
-			courses: { select: { id: true, title: true, level: true , language:true }}, 
+			courses: {
+				where: {
+					translation: {
+						some: {
+							language: { id: lang },
+						},
+					},
+				},
+				select: {
+					id: true,
+					translation: {
+						where: { language: { id: lang } },
+						select: { title: true },
+					},
+				},
+			},
 		},
 		where: { username: params.username },
 	})
 
 	invariantResponse(owner, 'Owner not found', { status: 404 })
 
-	return json({ owner })
+	// If the course translations are not found for the selected language, fall back to a default value or handle the case
+	const formattedCourses = owner.courses.map((c) => ({
+		id: c.id,
+		title: c.translation?.[0]?.title ?? 'Untitled', // Fallback to "Untitled" if no translation exists
+	}))
+
+	return json({ owner: { ...owner, courses: formattedCourses } })
 }
 
 export default function CoursesRoute() {

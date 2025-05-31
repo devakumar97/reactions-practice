@@ -11,34 +11,52 @@ export { action } from './__course-editor.server.tsx'
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
 	const course = await prisma.course.findFirst({
-		select: {
-			id: true,
-			title: true,
-			description: true,
-			content: true,
-			language:true,
-			level: true,
-			duration: true,
-			images: {
-				select: {
-					id: true,
-					altText: true,
-					contentType: true,
-				},
-			},
-		},
-		where: {
-			id: params.courseId,
-			ownerId: userId,
-		},
-	})
+  select: {
+    id: true,
+    duration: true,
+    images: {
+      select: {
+        id: true,
+        altText: true,
+        contentType: true,
+      },
+    },
+    translation: {
+      where: {
+        languageId: params.languageId, // or your current language id from params or session
+      },
+      select: {
+        title: true,
+        description: true,
+        content: true,
+        level: true,
+      },
+      take: 1,
+    },
+  },
+  where: {
+    id: params.courseId,
+    ownerId: userId,
+  },
+});
+
+const courseWithTranslation = course
+  ? {
+      ...course,
+      translation: course.translation[0] ?? null,
+	  title: '',
+    description: '',
+    content: '',
+    level: 'BEGINNER', // or default level
+    }
+  : null;
 	invariantResponse(course, 'Course not found', { status: 404 })
-	return json({ course: course })
+	return json({courseWithTranslation })
 }
 
 export default function CourseEdit() {
 	const data = useLoaderData<typeof loader>()
-	return <CourseEditor course={data.course} />
+	return <CourseEditor course={data.courseWithTranslation} />
 }
 
 export function ErrorBoundary() {
