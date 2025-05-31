@@ -90,11 +90,11 @@ export function DropdownField({
 				id={id}
 				aria-invalid={errorId ? "true" : undefined}
 				aria-describedby={errorId}
+				{...selectProps}
 				className={cn(
 					"rounded-md border border-border bg-background text-foreground px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring",
 					selectProps.className
 				)}
-				{...selectProps}
 			>
 				{selectProps.children}
 			</select>

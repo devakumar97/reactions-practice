@@ -60,6 +60,8 @@ import { useOptionalUser, useUser } from './utils/user.ts'
 import {i18n, useChangeLanguage} from './utils/i18n.ts'
 import { useTranslation } from 'react-i18next'
 import { getLanguage } from './utils/language-server.ts'
+import { UserDropdown } from './components/user-drowpdown.tsx'
+import { LanguageDropDown } from './components/language-dropdown.tsx'
 
 export const links: LinksFunction = () => {
 	return [
@@ -296,113 +298,6 @@ function AppWithProviders() {
 
 export default withSentry(AppWithProviders)
 
-function UserDropdown() {
-	const user = useUser()
-	const submit = useSubmit()
-	const formRef = useRef<HTMLFormElement>(null)
-	const { t } = useTranslation()
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button asChild variant="secondary">
-					<Link
-						to={`/users/${user.username}`}
-						// this is for progressive enhancement
-						onClick={(e) => e.preventDefault()}
-						className="flex items-center gap-2"
-					>
-						<img
-							className="h-8 w-8 rounded-full object-cover"
-							alt={user.name ?? user.username}
-							src={getUserImgSrc(user.image?.id)}
-						/>
-						<span className="text-body-sm font-bold">
-							{user.name ?? user.username}
-						</span>
-					</Link>
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuPortal>
-				<DropdownMenuContent sideOffset={8} align="start">
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}`}>
-							<Icon className="text-body-md" name="avatar">
-								{t('root.profile')}
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}/notes`}>
-							<Icon className="text-body-md" name="pencil-2">
-								{t('root.notes')}
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}/courses`}>
-							<Icon className="text-body-md" name="pencil-2">
-								{t('root.courses')}
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						asChild
-						// this prevents the menu from closing before the form submission is completed
-						onSelect={(event) => {
-							event.preventDefault()
-							submit(formRef.current)
-						}}
-					>
-						<Form action="/logout" method="POST" ref={formRef}>
-							<Icon className="text-body-md" name="exit">
-								<button type="submit">{t('root.logout')}</button>
-							</Icon>
-						</Form>
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenuPortal>
-		</DropdownMenu>
-	)
-}
-
-
-function LanguageDropDown() {
-	const { t, i18n } = useTranslation()
-	const fetcher = useFetcher()
-
-	const onValueChange = (lang: string) => {
-		i18n.changeLanguage(lang)
-		fetcher.submit(null, {
-			method: 'POST',
-			action: `/settings/change-language/${lang}`,
-		})
-	}
-
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button variant="secondary"> {t('root.language')} </Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent>
-				<DropdownMenuSeparator />
-				<DropdownMenuRadioGroup
-					value={i18n.language}
-					onValueChange={onValueChange}
-				>
-					<DropdownMenuRadioItem value="en">
-						{t('root.english')}
-					</DropdownMenuRadioItem>
-					<DropdownMenuRadioItem value="fr">
-						{t('root.french')}
-					</DropdownMenuRadioItem>
-					<DropdownMenuRadioItem value="es">
-						{t('root.spanish')}
-					</DropdownMenuRadioItem>
-				</DropdownMenuRadioGroup>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	)
-}
 // this is a last resort error boundary. There's not much useful information we
 // can offer at this level.
 export const ErrorBoundary = GeneralErrorBoundary

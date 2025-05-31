@@ -4,11 +4,13 @@
 	"root.spanish": "Spanish",
 	"root.language": "Switch language",
 	"root.login": "Log in",
-	"root.logout": "Logout",
-	"root.notes": "Notes",
-	"root.courses": "Courses",
-	"root.profile": "Profile",
 	"search": "Search",
+	"userDropdown": {
+		"root.logout": "Logout",
+		"root.notes": "Notes",
+		"root.courses": "Courses",
+		"root.profile": "Profile"
+	},
 	"login": {
 		"welcome": "Welcome back!",
 		"enterDetails": "Please enter your details.",
@@ -53,6 +55,7 @@
 		"description": "Description",
 		"content": "Content",
 		"edit": "Edit",
+		"delete": "Delete",
 		"notFound": "No user with the username \"{{username}}\" exists"
 	},
 	"coursesIndex": {
@@ -73,7 +76,19 @@
 			"altText": "Alt Text",
 			"addImage": "Add image",
 			"removeImage": "Remove image {{index}}",
-			"newImage": "new"
+			"newImage": "new",
+			"selectLanguage": "Select a language",
+			"languages": {
+				"en": "English",
+				"fr": "French",
+				"es": "Spanish"
+			},
+			"selectLevel": "Select a level",
+			"levels": {
+				"beginner": "Beginner",
+				"intermediate": "Intermediate",
+				"advanced": "Advanced"
+			}
 		},
 		"reset": "Reset",
 		"submit": "Submit",

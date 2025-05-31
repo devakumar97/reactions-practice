@@ -24,6 +24,7 @@ import { Textarea } from '#app/components/ui/textarea.tsx'
 import { cn, getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
 import { type action } from './__course-editor.server'
 import { useTranslation } from 'react-i18next'
+import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
 
 const titleMinLength = 1
 const titleMaxLength = 100
@@ -99,7 +100,7 @@ export function CourseEditor({
 	})
 	const imageList = fields.images.getFieldList()
 	const { t } = useTranslation()
-	
+
 	return (
 		<div className="absolute inset-0">
 			<FormProvider context={form.context}>
@@ -139,12 +140,16 @@ export function CourseEditor({
 							labelProps={{ children: t('courseEditor.form.language') }}
 							selectProps={{
 							name: 'languageId',
-							defaultValue: course?.translation?.languageId ?? 'en',
+							defaultValue: course?.translation?.languageId ?? "",
+							required: true,
 							children: (
 							<>
-								<option value="en">English</option>
-								<option value="fr">French</option>
-								<option value="es">Spanish</option>
+							<option value="" disabled hidden>
+								{t('courseEditor.form.selectLanguage')}
+								</option>
+								<option value="en">{getTranslatedLabel('courseEditor.form', 'languages', 'en', t)}</option>
+								<option value="fr">{getTranslatedLabel('courseEditor.form', 'languages', 'fr', t)}</option>
+								<option value="es">{getTranslatedLabel('courseEditor.form', 'languages', 'es', t)}</option>
 							</>
 					),
 				}}
@@ -153,12 +158,15 @@ export function CourseEditor({
 							labelProps={{ children: t('courseEditor.form.level') }}
 							selectProps={{
 							name: 'level',
-							defaultValue: course?.translation?.level, 
+							defaultValue: course?.translation?.level ?? "", 
 							children: (
 							<>
-								<option value="BEGINNER">BEGINNER</option>
-								<option value="INTERMEDIATE">INTERMEDIATE</option>
-								<option value="ADVANCED">ADVANCED</option>
+								<option value="" disabled hidden>
+								{t('courseEditor.form.selectLevel')}
+								</option>
+								<option value="BEGINNER">{getTranslatedLabel('courseEditor.form', 'levels', 'beginner', t)}</option>
+								<option value="INTERMEDIATE">{getTranslatedLabel('courseEditor.form', 'levels', 'intermediate', t)}</option>
+								<option value="ADVANCED">{getTranslatedLabel('courseEditor.form', 'levels', 'advanced', t)}</option>
 							</>
 					),
 				}}

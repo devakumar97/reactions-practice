@@ -29,6 +29,7 @@ import { userHasPermission, useOptionalUser } from '#app/utils/user.ts'
 import { type loader as courseLoader } from './courses'
 import { getLanguage } from '#app/utils/language-server.ts'
 import { useTranslation } from 'react-i18next'
+import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const lang = await getLanguage(request)
@@ -138,13 +139,10 @@ console.log('data.course.ownerId', data.course.ownerId)
 			user,
 			isOwner ? `delete:course:own` : `delete:course:any`, 
 		)
-		// console.log(user, isOwner, canDelete)
-		// console.log('canDelete:', canDelete, typeof canDelete);
-console.log('user:', user)
-console.log('isOwner:', isOwner)
-console.log('canDelete:', canDelete)
 
 	const displayBar = canDelete || isOwner
+	const basePath = 'courseEditor.form'
+
 
 	// const sectionRef = useRef<HTMLElement>(null)
 
@@ -154,7 +152,6 @@ console.log('canDelete:', canDelete)
 	// 	}
 	// }, [data.course.id])
 	// console.log(data.course.images);
-
 	return (
 		// <section
 		// 	ref={sectionRef}
@@ -168,8 +165,8 @@ console.log('canDelete:', canDelete)
 			</h2>
 			<div className="flex gap-6">
 
-			<p className="text-sm text-gray-500">{t('coursePage.language')}: {data.course.language}</p>
-			<p className="text-sm text-gray-500">{t('coursePage.level')}: {data.course.level}</p>
+			<p className="text-sm text-gray-500">{t(`${basePath}.language`)}: {getTranslatedLabel(basePath, 'languages', data.course.language, t)}</p>
+			<p className="text-sm text-gray-500">{t(`${basePath}.language`)}: {getTranslatedLabel(basePath, 'levels', data.course.level, t)}</p>
 			{data.course.duration && (
 				<p className="text-sm text-gray-500">
 					{t('coursePage.duration')}: {data.course.duration} {t('coursePage.minutes')}
@@ -223,7 +220,7 @@ console.log('canDelete:', canDelete)
 					</span>
 					<div className="grid flex-1 grid-cols-2 justify-end gap-2 min-[525px]:flex md:gap-4">
 				
-						{(canDelete || isOwner) && <DeleteCourse id={data.course.id} />}
+						{(canDelete) && <DeleteCourse id={data.course.id} />}
 						<Button asChild>
 							<Link to="edit">
 								<Icon name="pencil-1" className="scale-125 max-md:scale-150">
@@ -246,6 +243,7 @@ export function DeleteCourse({ id }: { id: string }) {
 		id: 'delete-course',
 		lastResult: actionData?.result,
 	})
+	const {t} = useTranslation()
 
 	return (
 		<Form method="POST" {...getFormProps(form)}>
@@ -260,7 +258,7 @@ export function DeleteCourse({ id }: { id: string }) {
 				className="w-full max-md:aspect-square max-md:px-0"
 			>
 				<Icon name="trash" className="scale-125 max-md:scale-150">
-					<span className="max-md:hidden">Delete</span>
+					<span className="max-md:hidden">{t('coursePage.delete')}</span>
 				</Icon>
 			</StatusButton>
 			<ErrorList errors={form.errors} id={form.errorId} />

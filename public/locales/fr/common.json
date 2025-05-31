@@ -4,11 +4,13 @@
 	"root.spanish": "Espagnol",
 	"root.language": "Changer de langue",
 	"root.login": "Se connecter",
-	"root.logout": "Se déconnecter",
-	"root.notes": "Notes",
-	"root.courses": "Cours",
-	"root.profile": "Profil",
 	"search": "Rechercher",
+	"userDropdown": {
+		"root.logout": "Se déconnecter",
+		"root.notes": "Notes",
+		"root.courses": "Cours",
+		"root.profile": "Profil"
+	},
 	"login": {
 		"welcome": "Bon retour !",
 		"enterDetails": "Veuillez entrer vos informations.",
@@ -51,6 +53,7 @@
 		"description": "Description",
 		"content": "Contenu",
 		"edit": "Éditer",
+		"delete": "supprimer",
 		"notFound": "Aucun utilisateur avec le nom d'utilisateur \"{{username}}\" n'existe"
 	},
 	"coursesIndex": {
@@ -71,7 +74,19 @@
 			"altText": "Texte alternatif",
 			"addImage": "Ajouter une image",
 			"removeImage": "Supprimer l'image {{index}}",
-			"newImage": "nouvelle"
+			"newImage": "nouvelle",
+			"selectLanguage": "Choisissez une langue",
+			"languages": {
+				"en": "Anglais",
+				"fr": "Français",
+				"es": "Espagnol"
+			},
+			"selectLevel": "Choisissez un niveau",
+			"levels": {
+				"beginner": "Débutant",
+				"intermediate": "Intermédiaire",
+				"advanced": "Avancé"
+			}
 		},
 		"reset": "Réinitialiser",
 		"submit": "Soumettre",
