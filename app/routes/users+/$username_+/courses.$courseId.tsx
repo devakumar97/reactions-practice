@@ -168,11 +168,11 @@ console.log('canDelete:', canDelete)
 			</h2>
 			<div className="flex gap-6">
 
-			<p className="text-sm text-gray-500">Language: {data.course.language}</p>
-			<p className="text-sm text-gray-500">Level: {data.course.level}</p>
+			<p className="text-sm text-gray-500">{t('coursePage.language')}: {data.course.language}</p>
+			<p className="text-sm text-gray-500">{t('coursePage.level')}: {data.course.level}</p>
 			{data.course.duration && (
 				<p className="text-sm text-gray-500">
-					Duration: {data.course.duration} minutes
+					{t('coursePage.duration')}: {data.course.duration} {t('coursePage.minutes')}
 				</p>
 			)}
 			</div>
@@ -195,7 +195,7 @@ console.log('canDelete:', canDelete)
 		<div className="space-y-4">
 			<div className="">
 				<label className="block text-sm font-semibold text-muted-foreground mb-1">
-      			Description:
+      			{t('coursePage.description')}:
 				</label>
 			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.description}
@@ -205,7 +205,7 @@ console.log('canDelete:', canDelete)
 		<div className="space-y-4">
 			<div className="">
 				<label className="block text-sm font-semibold text-muted-foreground mb-1">
-      			Content:
+      			{t('coursePage.content')}:
 				</label>
 			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.content}
@@ -227,7 +227,7 @@ console.log('canDelete:', canDelete)
 						<Button asChild>
 							<Link to="edit">
 								<Icon name="pencil-1" className="scale-125 max-md:scale-150">
-									<span className="max-md:hidden">{t('edit')}</span>
+									<span className="max-md:hidden">{t('coursePage.edit')}</span>
 								</Icon>
 							</Link>
 						</Button>

@@ -1,10 +1,13 @@
 import { type MetaFunction } from '@remix-run/react'
 import { type loader as coursesLoader } from './courses.tsx'
+import { useTranslation } from 'react-i18next'
 
 export default function CoursesIndexRoute() {
+		const { t } = useTranslation()
+
 	return (
 		<div className="container pt-12">
-			<p className="text-body-md">Select a course</p>
+			<p className="text-body-md">{t('coursesIndex.selectCourse')}</p>
 		</div>
 	)
 }

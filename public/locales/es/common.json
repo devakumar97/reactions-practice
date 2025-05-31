@@ -1,17 +1,17 @@
 {
 	"root.english": "Inglés",
 	"root.french": "Francés",
-	"root.spanish": "española",
+	"root.spanish": "Español",
 	"root.language": "Cambiar idioma",
 	"root.login": "Iniciar sesión",
 	"root.logout": "Cerrar sesión",
 	"root.notes": "Notas",
-	"root.courses":"Courses",
+	"root.courses": "Cursos",
 	"root.profile": "Perfil",
 	"search": "Buscar",
 	"login": {
 		"welcome": "¡Bienvenido de nuevo!",
-		"enterDetails": "Por favor ingrese sus detalles.",
+		"enterDetails": "Por favor, ingrese sus datos.",
 		"username": "Nombre de usuario",
 		"password": "Contraseña",
 		"rememberMe": "Recuérdame",
@@ -22,7 +22,7 @@
 	},
 	"signup": {
 		"startJourney": "¡Comencemos tu viaje!",
-		"enterEmail": "Por favor ingrese su correo electrónico.",
+		"enterEmail": "Por favor, introduce tu correo electrónico.",
 		"email": "Correo electrónico",
 		"submit": "Enviar"
 	},
@@ -31,13 +31,6 @@
 		"codeInfo": "Aquí está tu código de verificación:",
 		"clickLink": "O haz clic en el enlace para comenzar:"
 	},
-	"notes": {
-		"title": "Notas de {{owner}}",
-		"newNote": "Nueva nota"
-	},
-	"notesIndex": {
-		"selectNotes": "Selecciona una nota"
-	},
 	"auth": {
 		"types": {
 			"login": "Iniciar sesión",
@@ -45,5 +38,44 @@
 			"connect": "Conectar"
 		},
 		"actionWithProvider": "{{type}} con {{label}}"
+	},
+	"coursesPage": {
+		"addCourse": "Agregar curso",
+		"ownersCourses": "Cursos de {{owner}}"
+	},
+	"coursePage": {
+		"language": "Idioma",
+		"level": "Nivel",
+		"duration": "Duración",
+		"minutes": "minutos",
+		"description": "Descripción",
+		"content": "Contenido",
+		"edit": "Editar",
+		"notFound": "No existe un usuario con el nombre de usuario \"{{username}}\""
+	},
+	"coursesIndex": {
+		"selectCourse": "Seleccionar un curso"
+	},
+	"courseEdit": {
+		"notFound": "No existe un curso con el ID \"{{courseId}}\""
+	},
+	"courseEditor": {
+		"form": {
+			"title": "Título",
+			"description": "Descripción",
+			"content": "Contenido",
+			"duration": "Duración (en minutos)",
+			"language": "Idioma",
+			"level": "Nivel",
+			"images": "Imágenes",
+			"altText": "Texto alternativo",
+			"addImage": "Agregar imagen",
+			"removeImage": "Eliminar imagen {{index}}",
+			"newImage": "nueva"
+		},
+		"reset": "Restablecer",
+		"submit": "Enviar",
+		"select": "Seleccionar un curso",
+		"notFound": "No existe un curso con el ID \"{{courseId}}\""
 	}
 }

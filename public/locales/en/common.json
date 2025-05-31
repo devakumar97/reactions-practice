@@ -33,13 +33,6 @@
 		"codeInfo": "Here's your verification code:",
 		"clickLink": "Or click the link to get started:"
 	},
-	"notes": {
-		"title": "{{owner}}'s Notes",
-		"newNote": "New Note"
-	},
-	"notesIndex": {
-		"selectNotes": "Select a note"
-	},
 	"auth": {
 		"types": {
 			"login": "Login",
@@ -47,5 +40,44 @@
 			"connect": "Connect"
 		},
 		"actionWithProvider": "{{type}} with {{label}}"
+	},
+	"coursesPage": {
+		"addCourse": "Add Course",
+		"ownersCourses": "{{owner}}'s Courses"
+	},
+	"coursePage": {
+		"language": "Language",
+		"level": "Level",
+		"duration": "Duration",
+		"minutes": "minutes",
+		"description": "Description",
+		"content": "Content",
+		"edit": "Edit",
+		"notFound": "No user with the username \"{{username}}\" exists"
+	},
+	"coursesIndex": {
+		"selectCourse": "Select a course"
+	},
+	"courseEdit": {
+		"notFound": "No course with the id \"{{courseId}}\" exists"
+	},
+	"courseEditor": {
+		"form": {
+			"title": "Title",
+			"description": "Description",
+			"content": "Content",
+			"duration": "Duration (in mins)",
+			"language": "Language",
+			"level": "Level",
+			"images": "Images",
+			"altText": "Alt Text",
+			"addImage": "Add image",
+			"removeImage": "Remove image {{index}}",
+			"newImage": "new"
+		},
+		"reset": "Reset",
+		"submit": "Submit",
+		"select": "Select a course",
+		"notFound": "No course with the id \"{{courseId}}\" exists"
 	}
 }

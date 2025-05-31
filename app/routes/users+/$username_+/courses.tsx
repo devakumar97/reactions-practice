@@ -7,6 +7,7 @@ import { prisma } from '#app/utils/db.server.ts'
 import { cn, getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
 import { getLanguage } from '#app/utils/language-server.ts'
+import { useTranslation } from 'react-i18next'
 
 export async function loader({ request,params }: LoaderFunctionArgs) {
 	const lang = await getLanguage(request)
@@ -55,6 +56,8 @@ export default function CoursesRoute() {
 	const ownerDisplayName = data.owner.name ?? data.owner.username
 	const navLinkDefaultClassName =
 		'line-clamp-2 block rounded-l-full py-2 pl-8 pr-6 text-base lg:text-xl'
+		  const { t } = useTranslation()
+
 
 	return (
 		<main className="container flex h-full min-h-[400px] px-0 pb-12 md:px-8">
@@ -73,7 +76,7 @@ export default function CoursesRoute() {
 								height={256}
 							/>
 							<h1 className="text-center text-base font-bold md:text-lg lg:text-left lg:text-2xl">
-								{ownerDisplayName}'s Courses
+								{t('coursesPage.ownersCourses', { owner: ownerDisplayName })}
 							</h1>
 						</Link>
 						<ul className="overflow-y-auto overflow-x-hidden pb-12">
@@ -85,7 +88,7 @@ export default function CoursesRoute() {
 											cn(navLinkDefaultClassName, isActive && 'bg-accent')
 										}
 									>
-										<Icon name="plus">Add Course</Icon>
+										<Icon name="plus">{t('coursesPage.addCourse')}</Icon>
 									</NavLink>
 								</li>
 							) : null}
@@ -115,11 +118,12 @@ export default function CoursesRoute() {
 }
 
 export function ErrorBoundary() {
+		const { t } = useTranslation()
 	return (
 		<GeneralErrorBoundary
 			statusHandlers={{
 				404: ({ params }) => (
-					<p>No user with the username "{params.username}" exists</p>
+					<p>{t('user.notFound', { username: params.username })}</p>
 				),
 			}}
 		/>

@@ -5,6 +5,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { CourseEditor } from './__course-editor.tsx'
+import { useTranslation } from 'react-i18next'
 
 export { action } from './__course-editor.server.tsx'
 
@@ -60,11 +61,13 @@ export default function CourseEdit() {
 }
 
 export function ErrorBoundary() {
+  	const { t } = useTranslation()
+
 	return (
 		<GeneralErrorBoundary
 			statusHandlers={{
 				404: ({ params }) => (
-					<p>No course with the id "{params.courseId}" exists</p>
+				<p>{t('courseEdit.notFound', { courseId: params.courseId })}</p>
 				),
 			}}
 		/>

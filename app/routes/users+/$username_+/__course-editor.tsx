@@ -23,6 +23,7 @@ import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { Textarea } from '#app/components/ui/textarea.tsx'
 import { cn, getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
 import { type action } from './__course-editor.server'
+import { useTranslation } from 'react-i18next'
 
 const titleMinLength = 1
 const titleMaxLength = 100
@@ -97,6 +98,7 @@ export function CourseEditor({
 		shouldRevalidate: 'onBlur',
 	})
 	const imageList = fields.images.getFieldList()
+	const { t } = useTranslation()
 	
 	return (
 		<div className="absolute inset-0">
@@ -111,22 +113,22 @@ export function CourseEditor({
 					{course ? <input type="hidden" name="id" value={course.id} /> : null}
 					<div className="flex flex-col gap-1">
 						<Field
-							labelProps={{ children: 'Title' }}
+							labelProps={{ children: t('courseEditor.form.title') }}
 							inputProps={{ autoFocus: true, ...getInputProps(fields.title, { type: 'text' }) }}
 							errors={fields.title.errors}
 						/>
 						<Field
-							labelProps={{ children: 'Description' }}
+							labelProps={{ children: t('courseEditor.form.description') }}
 							inputProps={{ ...getInputProps(fields.description, { type: 'text' }) }}
 							errors={fields.description.errors}
 						/>
 						<TextareaField
-							labelProps={{ children: 'Content' }}
+							labelProps={{ children: t('courseEditor.form.content') }}
 							textareaProps={{ ...getTextareaProps(fields.content) }}
 							errors={fields.content.errors}
 						/>
 						<Field
-							labelProps={{ children: 'Duration (in mins)' }}
+							labelProps={{ children: t('courseEditor.form.duration') }}
 							inputProps={{
 							defaultValue: course?.duration,
 							...getInputProps(fields.duration,{ type: 'number' }),
@@ -134,7 +136,7 @@ export function CourseEditor({
 							errors={fields.duration.errors}
 							/>
 						<DropdownField 
-							labelProps={{ children: 'Language' }}
+							labelProps={{ children: t('courseEditor.form.language') }}
 							selectProps={{
 							name: 'languageId',
 							defaultValue: course?.translation?.languageId ?? 'en',
@@ -148,7 +150,7 @@ export function CourseEditor({
 				}}
 			/>
 						<DropdownField 
-							labelProps={{ children: 'Level' }}
+							labelProps={{ children: t('courseEditor.form.level') }}
 							selectProps={{
 							name: 'level',
 							defaultValue: course?.translation?.level, 
@@ -162,7 +164,7 @@ export function CourseEditor({
 				}}
 			/>
 					<div>
-							<Label>Images</Label>
+							<Label>{t('courseEditor.form.images')}</Label>
 							<ul className="flex flex-col gap-4">
 								{imageList.map((imageMeta, index) => {
 									const image = course?.images[index]
@@ -180,7 +182,7 @@ export function CourseEditor({
 												<span aria-hidden>
 													<Icon name="cross-1" />
 												</span>{' '}
-												<span className="sr-only">Remove image {index + 1}</span>
+												<span className="sr-only">{t('courseEditor.form.removeImage', { index: index + 1 })}</span>
 											</button>
 											<ImageChooser meta={imageMeta}  />
 										</li>
@@ -190,9 +192,9 @@ export function CourseEditor({
 						</div>
 						<Button className="mt-3" {...form.insert.getButtonProps({ name: fields.images.name })}>
 							<span aria-hidden>
-								<Icon name="plus">Image</Icon>
+								<Icon name="plus">{t('courseEditor.form.images')}</Icon>
 							</span>{' '}
-							<span className="sr-only">Add image</span>
+							<span className="sr-only">{t('courseEditor.form.addImage')}</span>
 						</Button>
 					</div>
 					<ErrorList id={form.errorId} errors={form.errors} />
@@ -202,10 +204,10 @@ export function CourseEditor({
   					variant="destructive"
   				{...form.reset.getButtonProps()}
 				>
-				Reset
+				{t('courseEditor.reset')}
 				</Button>
 					<StatusButton form={form.id} type="submit" disabled={isPending} status={isPending ? 'pending' : 'idle'}>
-						Submit
+						{t('courseEditor.submit')}
 					</StatusButton>
 				</div>
 			</FormProvider>
@@ -224,6 +226,7 @@ function ImageChooser({
 		fields.id.initialValue ? getCourseImgSrc(fields.id.initialValue) : null,
 	)
 	const [altText, setAltText] = useState(fields.altText.initialValue ?? '')
+	const { t } = useTranslation()
 
 	return (
 		<fieldset {...getFieldsetProps(meta)}>
@@ -257,7 +260,7 @@ function ImageChooser({
 									)}
 									{existingImage ? null : (
 										<div className="pointer-events-none absolute -right-0.5 -top-0.5 rotate-12 rounded-sm bg-secondary px-2 py-1 text-xs text-secondary-foreground shadow-md">
-											new
+											{t('courseEditor.form.newImage')}
 										</div>
 									)}
 								</div>
@@ -295,7 +298,7 @@ function ImageChooser({
 					</div>
 				</div>
 				<div className="flex-1">
-					<Label htmlFor={fields.altText.id}>Alt Text</Label>
+					<Label htmlFor={fields.altText.id}>{t('courseEditor.form.altText')}</Label>
 					<Textarea
 						onChange={(e) => setAltText(e.currentTarget.value)}
 						{...getTextareaProps(fields.altText)}
@@ -316,5 +319,6 @@ function ImageChooser({
 }
 
 export function ErrorBoundary() {
-	return <GeneralErrorBoundary statusHandlers={{ 404: ({ params }) => <p>No Course with the id "{params.courseId}" exists</p> }} />
+		const { t } = useTranslation()
+	return <GeneralErrorBoundary statusHandlers={{ 404: ({ params }) => <p>{t('courseEditor.notFound', { courseId: params.courseId })}</p> }} />
 }
