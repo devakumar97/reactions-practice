@@ -13,5 +13,6 @@
 	],
 	"workbench.editorAssociations": {
 		"*.db": "sqlite-viewer.view"
-	}
+	},
+	"postman.settings.dotenv-detection-notification-visibility": false
 }

@@ -4,10 +4,13 @@
 	"root.spanish": "Spanish",
 	"root.language": "Switch language",
 	"root.login": "Log in",
-	"root.logout": "Logout",
-	"root.notes": "Notes",
-	"root.profile": "Profile",
 	"search": "Search",
+	"userDropdown": {
+		"root.logout": "Logout",
+		"root.notes": "Notes",
+		"root.courses": "Courses",
+		"root.profile": "Profile"
+	},
 	"login": {
 		"welcome": "Welcome back!",
 		"enterDetails": "Please enter your details.",
@@ -32,13 +35,6 @@
 		"codeInfo": "Here's your verification code:",
 		"clickLink": "Or click the link to get started:"
 	},
-	"notes": {
-		"title": "{{owner}}'s Notes",
-		"newNote": "New Note"
-	},
-	"notesIndex": {
-		"selectNotes": "Select a note"
-	},
 	"auth": {
 		"types": {
 			"login": "Login",
@@ -47,10 +43,67 @@
 		},
 		"actionWithProvider": "{{type}} with {{label}}"
 	},
-	"projects": {
-		"status": "Status",
-		"deadline": "Deadline",
-		"ago": "ago",
-		"edit": "Edit"
+	"coursesPage": {
+		"addCourse": "Add Course",
+		"ownersCourses": "{{owner}}'s Courses"
+	},
+	"coursePage": {
+		"language": "Language",
+		"level": "Level",
+		"duration": "Duration",
+		"minutes": "minutes",
+		"description": "Description",
+		"content": "Content",
+		"edit": "Edit",
+		"delete": "Delete",
+		"notFound": "No user with the username \"{{username}}\" exists",
+		"label": {
+			"title": "Title",
+			"decription": "Decription",
+			"level": "Level",
+			"language": "Language"
+		}
+	},
+	"coursesIndex": {
+		"selectCourse": "Select a course"
+	},
+	"courseEdit": {
+		"notFound": "No course with the id \"{{courseId}}\" exists"
+	},
+	"courseEditor": {
+		"form": {
+			"title": "Title",
+			"description": "Description",
+			"content": "Content",
+			"duration": "Duration (in mins)",
+			"language": "Language",
+			"level": "Level",
+			"images": "Images",
+			"altText": "Alt Text",
+			"addImage": "Add image",
+			"removeImage": "Remove image {{index}}",
+			"newImage": "new",
+			"selectLanguage": "Select a language",
+			"languages": {
+				"en": "English",
+				"fr": "French",
+				"es": "Spanish"
+			},
+			"selectLevel": "Select a level",
+			"levels": {
+				"beginner": "Beginner",
+				"intermediate": "Intermediate",
+				"advanced": "Advanced"
+			}
+		},
+		"reset": "Reset",
+		"submit": "Submit",
+		"select": "Select a course",
+		"notFound": "No course with the id \"{{courseId}}\" exists"
+	},
+	"table": {
+		"search": "Search courses...",
+		"actions": "Actions",
+		"empty": "No data available"
 	}
 }

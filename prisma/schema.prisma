@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -25,6 +25,7 @@ model User {
   roles       Role[]
   sessions    Session[]
   connections Connection[]
+  courses     Course[]
 }
 
 model Note {
@@ -73,6 +74,65 @@ model UserImage {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
+}
+
+model Course {
+  id       String @id @default(cuid())
+  duration Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ownerId String
+
+  images      CourseImage[]
+  translation CourseTranslation[]
+
+  @@index([ownerId])
+  @@index([ownerId, updatedAt])
+}
+
+model CourseImage {
+  id          String  @id @default(cuid())
+  altText     String?
+  contentType String
+  blob        Bytes
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  courseId String
+
+  @@index([courseId])
+}
+
+// ENUM for course level
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model CourseTranslation {
+  courseId    String
+  languageId  String
+  title       String
+  description String
+  content     String
+  level       CourseLevel
+
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, languageId])
+}
+
+model Language {
+  id           String              @id // e.g., "en", "fr", "es"
+  name         String
+  translations CourseTranslation[]
 }
 
 model Password {
