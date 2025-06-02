@@ -23,6 +23,9 @@ import { checkHoneypot } from '#app/utils/honeypot.server.ts'
 import { useIsPending } from '#app/utils/misc.tsx'
 import { PasswordSchema, UsernameSchema } from '#app/utils/user-validation.ts'
 import { handleNewSession } from './login.server.ts'
+import { i18next } from '#app/utils/i18next.server.ts'
+import { useTranslation } from "react-i18next"; 
+
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -42,6 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
 	await requireAnonymous(request)
+	const t = await i18next.getFixedT(request)
 	const formData = await request.formData()
 	checkHoneypot(formData)
 	const submission = await parseWithZod(formData, {
@@ -53,7 +57,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				if (!session) {
 					ctx.addIssue({
 						code: z.ZodIssueCode.custom,
-						message: 'Invalid username or password',
+						message: t('auth.invalidUsernameOrPassword'),
 					})
 					return z.NEVER
 				}
@@ -96,14 +100,15 @@ export default function LoginPage() {
 		},
 		shouldRevalidate: 'onBlur',
 	})
+		const { t } = useTranslation();
 
 	return (
 		<div className="flex min-h-full flex-col justify-center pb-32 pt-20">
 			<div className="mx-auto w-full max-w-md">
 				<div className="flex flex-col gap-3 text-center">
-					<h1 className="text-h1">Welcome back!</h1>
+					<h1 className="text-h1">{t('login.welcome')}</h1>
 					<p className="text-body-md text-muted-foreground">
-						Please enter your details.
+						{t('login.enterDetails')}
 					</p>
 				</div>
 				<Spacer size="xs" />
@@ -113,7 +118,7 @@ export default function LoginPage() {
 						<Form method="POST" {...getFormProps(form)}>
 							<HoneypotInputs />
 							<Field
-								labelProps={{ children: 'Username' }}
+								labelProps={{ children: t('login.username') }}
 								inputProps={{
 									...getInputProps(fields.username, { type: 'text' }),
 									autoFocus: true,
@@ -124,7 +129,7 @@ export default function LoginPage() {
 							/>
 
 							<Field
-								labelProps={{ children: 'Password' }}
+								labelProps={{ children: t('login.password') }}
 								inputProps={{
 									...getInputProps(fields.password, {
 										type: 'password',
@@ -138,7 +143,7 @@ export default function LoginPage() {
 								<CheckboxField
 									labelProps={{
 										htmlFor: fields.remember.id,
-										children: 'Remember me',
+										children: t('login.rememberMe'),
 									}}
 									buttonProps={getInputProps(fields.remember, {
 										type: 'checkbox',
@@ -150,7 +155,7 @@ export default function LoginPage() {
 										to="/forgot-password"
 										className="text-body-xs font-semibold"
 									>
-										Forgot password?
+										{t('login.forgotPassword')}
 									</Link>
 								</div>
 							</div>
@@ -167,7 +172,7 @@ export default function LoginPage() {
 									type="submit"
 									disabled={isPending}
 								>
-									Log in
+									{t('login.loginButton')}
 								</StatusButton>
 							</div>
 						</Form>
@@ -175,7 +180,7 @@ export default function LoginPage() {
 							{providerNames.map((providerName) => (
 								<li key={providerName}>
 									<ProviderConnectionForm
-										type="Login"
+										type={t('root.login')}
 										providerName={providerName}
 										redirectTo={redirectTo}
 									/>
@@ -183,7 +188,7 @@ export default function LoginPage() {
 							))}
 						</ul>
 						<div className="flex items-center justify-center gap-2 pt-6">
-							<span className="text-muted-foreground">New here?</span>
+							<span className="text-muted-foreground">{t('login.newHere')}</span>
 							<Link
 								to={
 									redirectTo
@@ -191,7 +196,7 @@ export default function LoginPage() {
 										: '/signup'
 								}
 							>
-								Create an account
+								{t('login.createAccount')}
 							</Link>
 						</div>
 					</div>

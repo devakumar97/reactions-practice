@@ -13,6 +13,7 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useFetcher,
 	useLoaderData,
 	useMatches,
 	useSubmit,
@@ -27,13 +28,6 @@ import { EpicProgress } from './components/progress-bar.tsx'
 import { SearchBar } from './components/search-bar.tsx'
 import { useToast } from './components/toaster.tsx'
 import { Button } from './components/ui/button.tsx'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuPortal,
-	DropdownMenuTrigger,
-} from './components/ui/dropdown-menu.tsx'
 import { Icon, href as iconsHref } from './components/ui/icon.tsx'
 import { EpicToaster } from './components/ui/sonner.tsx'
 import {
@@ -53,6 +47,11 @@ import { type Theme, getTheme } from './utils/theme.server.ts'
 import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
 import { useOptionalUser, useUser } from './utils/user.ts'
+import {i18n, useChangeLanguage} from './utils/i18n.ts'
+import { useTranslation } from 'react-i18next'
+import { getLanguage } from './utils/language-server.ts'
+import { UserDropdown } from './components/user-drowpdown.tsx'
+import { LanguageDropDown } from './components/language-dropdown.tsx'
 
 export const links: LinksFunction = () => {
 	return [
@@ -76,7 +75,7 @@ export const links: LinksFunction = () => {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	return [
-		{ title: data ? 'Epic Notes' : 'Error | Epic Notes' },
+		{ title: data ? 'Course' : 'Error | Course' },
 		{ name: 'description', content: `Your own captain's log` },
 	]
 }
@@ -88,7 +87,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		type: 'getUserId',
 		desc: 'getUserId in root',
 	})
-
+	const locale = await getLanguage(request)
 	const user = userId
 		? await time(
 				() =>
@@ -128,6 +127,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				hints: getHints(request),
 				origin: getDomainUrl(request),
 				path: new URL(request.url).pathname,
+				locale,
 				userPrefs: {
 					theme: getTheme(request),
 				},
@@ -145,6 +145,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	)
 }
 
+export const handle = {
+	// In the handle export, we can add a i18n key with namespaces our route
+	// will need to load. This key can be a single string or an array of strings.
+	// TIP: In most cases, you should set this to your defaultNS from your i18n config
+	// or if you did not set one, set it to the i18next default namespace "translation"
+	i18n: 'common',
+}
+
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
 	const headers = {
 		'Server-Timing': loaderHeaders.get('Server-Timing') ?? '',
@@ -156,16 +164,18 @@ function Document({
 	children,
 	nonce,
 	theme = 'light',
+	locale = i18n.fallbackLng,
 	env = {},
 }: {
 	children: React.ReactNode
 	nonce: string
 	theme?: Theme
+	locale?: string
 	env?: Record<string, string>
 }) {
 	const allowIndexing = ENV.ALLOW_INDEXING !== 'false'
 	return (
-		<html lang="en" className={`${theme} h-full overflow-x-hidden`}>
+		<html lang={locale} className={`${theme} h-full overflow-x-hidden`}>
 			<head>
 				<ClientHintCheck nonce={nonce} />
 				<Meta />
@@ -196,8 +206,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const data = useLoaderData<typeof loader | null>()
 	const nonce = useNonce()
 	const theme = useOptionalTheme()
+
 	return (
-		<Document nonce={nonce} theme={theme} env={data?.ENV}>
+		<Document nonce={nonce} theme={theme} env={data?.ENV} locale={data?.requestInfo.locale}>
 			{children}
 		</Document>
 	)
@@ -210,7 +221,10 @@ function App() {
 	const matches = useMatches()
 	const isOnSearchPage = matches.find((m) => m.id === 'routes/users+/index')
 	const searchBar = isOnSearchPage ? null : <SearchBar status="idle" />
+	const { t } = useTranslation()
+	const { locale } = data.requestInfo
 	useToast(data.toast)
+	useChangeLanguage(locale)
 
 	return (
 		<>
@@ -218,29 +232,26 @@ function App() {
 				<header className="container py-6">
 					<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
 						<Logo />
-						<div className="ml-auto hidden max-w-sm flex-1 sm:block">
+						{/* <div className="ml-auto hidden max-w-sm flex-1 sm:block">
 							{searchBar}
-						</div>
+						</div> */}
+						
 						<div className="flex items-center gap-10">
+							<LanguageDropDown />
 							{user ? (
 								<UserDropdown />
 							) : (
 								<Button asChild variant="default" size="lg">
-									<Link to="/login">Log In</Link>
+									<Link to="/login">{t('root.login')}</Link>
 								</Button>
 							)}
+							<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 						</div>
 						<div className="block w-full sm:hidden">{searchBar}</div>
 					</nav>
 				</header>
-
 				<div className="flex-1">
 					<Outlet />
-				</div>
-
-				<div className="container flex justify-between pb-5">
-					<Logo />
-					<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
 				</div>
 			</div>
 			<EpicToaster closeButton position="top-center" theme={theme} />
@@ -253,10 +264,10 @@ function Logo() {
 	return (
 		<Link to="/" className="group grid leading-snug">
 			<span className="font-light transition group-hover:-translate-x-1">
-				epic
+				D
 			</span>
 			<span className="font-bold transition group-hover:translate-x-1">
-				notes
+				Course
 			</span>
 		</Link>
 	)
@@ -272,67 +283,6 @@ function AppWithProviders() {
 }
 
 export default withSentry(AppWithProviders)
-
-function UserDropdown() {
-	const user = useUser()
-	const submit = useSubmit()
-	const formRef = useRef<HTMLFormElement>(null)
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button asChild variant="secondary">
-					<Link
-						to={`/users/${user.username}`}
-						// this is for progressive enhancement
-						onClick={(e) => e.preventDefault()}
-						className="flex items-center gap-2"
-					>
-						<img
-							className="h-8 w-8 rounded-full object-cover"
-							alt={user.name ?? user.username}
-							src={getUserImgSrc(user.image?.id)}
-						/>
-						<span className="text-body-sm font-bold">
-							{user.name ?? user.username}
-						</span>
-					</Link>
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuPortal>
-				<DropdownMenuContent sideOffset={8} align="start">
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}`}>
-							<Icon className="text-body-md" name="avatar">
-								Profile
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link prefetch="intent" to={`/users/${user.username}/notes`}>
-							<Icon className="text-body-md" name="pencil-2">
-								Notes
-							</Icon>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						asChild
-						// this prevents the menu from closing before the form submission is completed
-						onSelect={(event) => {
-							event.preventDefault()
-							submit(formRef.current)
-						}}
-					>
-						<Form action="/logout" method="POST" ref={formRef}>
-							<Icon className="text-body-md" name="exit">
-								<button type="submit">Logout</button>
-							</Icon>
-						</Form>
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenuPortal>
-		</DropdownMenu>
-	)
-}
 
 // this is a last resort error boundary. There's not much useful information we
 // can offer at this level.
