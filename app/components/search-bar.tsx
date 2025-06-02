@@ -5,6 +5,8 @@ import { Icon } from './ui/icon.tsx'
 import { Input } from './ui/input.tsx'
 import { Label } from './ui/label.tsx'
 import { StatusButton } from './ui/status-button.tsx'
+import { useTranslation } from 'react-i18next'
+
 
 export function SearchBar({
 	status,
@@ -26,6 +28,7 @@ export function SearchBar({
 	const handleFormChange = useDebounce((form: HTMLFormElement) => {
 		submit(form)
 	}, 400)
+	const { t } = useTranslation()
 
 	return (
 		<Form
@@ -36,14 +39,14 @@ export function SearchBar({
 		>
 			<div className="flex-1">
 				<Label htmlFor={id} className="sr-only">
-					Search
+					{t('search')}
 				</Label>
 				<Input
 					type="search"
 					name="search"
 					id={id}
 					defaultValue={searchParams.get('search') ?? ''}
-					placeholder="Search"
+					placeholder={t('search')}
 					className="w-full"
 					autoFocus={autoFocus}
 				/>
@@ -55,7 +58,7 @@ export function SearchBar({
 					className="flex w-full items-center justify-center"
 				>
 					<Icon name="magnifying-glass" size="md" />
-					<span className="sr-only">Search</span>
+					<span className="sr-only">{t('search')}</span>
 				</StatusButton>
 			</div>
 		</Form>

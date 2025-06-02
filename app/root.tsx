@@ -13,6 +13,7 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useFetcher,
 	useLoaderData,
 	useMatches,
 	useSubmit,
@@ -33,6 +34,9 @@ import {
 	DropdownMenuItem,
 	DropdownMenuPortal,
 	DropdownMenuTrigger,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
 } from './components/ui/dropdown-menu.tsx'
 import { Icon, href as iconsHref } from './components/ui/icon.tsx'
 import { EpicToaster } from './components/ui/sonner.tsx'
@@ -53,6 +57,9 @@ import { type Theme, getTheme } from './utils/theme.server.ts'
 import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
 import { useOptionalUser, useUser } from './utils/user.ts'
+import {i18n, useChangeLanguage} from './utils/i18n.ts'
+import { i18next } from './utils/i18next.server.ts'
+import { useTranslation } from 'react-i18next'
 
 export const links: LinksFunction = () => {
 	return [
@@ -88,7 +95,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		type: 'getUserId',
 		desc: 'getUserId in root',
 	})
-
+	const locale = await i18next.getLocale(request)
 	const user = userId
 		? await time(
 				() =>
@@ -128,6 +135,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				hints: getHints(request),
 				origin: getDomainUrl(request),
 				path: new URL(request.url).pathname,
+				locale,
 				userPrefs: {
 					theme: getTheme(request),
 				},
@@ -145,6 +153,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	)
 }
 
+export const handle = {
+	// In the handle export, we can add a i18n key with namespaces our route
+	// will need to load. This key can be a single string or an array of strings.
+	// TIP: In most cases, you should set this to your defaultNS from your i18n config
+	// or if you did not set one, set it to the i18next default namespace "translation"
+	i18n: 'common',
+}
+
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
 	const headers = {
 		'Server-Timing': loaderHeaders.get('Server-Timing') ?? '',
@@ -156,16 +172,18 @@ function Document({
 	children,
 	nonce,
 	theme = 'light',
+	locale = i18n.fallbackLng,
 	env = {},
 }: {
 	children: React.ReactNode
 	nonce: string
 	theme?: Theme
+	locale?: string
 	env?: Record<string, string>
 }) {
 	const allowIndexing = ENV.ALLOW_INDEXING !== 'false'
 	return (
-		<html lang="en" className={`${theme} h-full overflow-x-hidden`}>
+		<html lang={locale} className={`${theme} h-full overflow-x-hidden`}>
 			<head>
 				<ClientHintCheck nonce={nonce} />
 				<Meta />
@@ -196,8 +214,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const data = useLoaderData<typeof loader | null>()
 	const nonce = useNonce()
 	const theme = useOptionalTheme()
+
 	return (
-		<Document nonce={nonce} theme={theme} env={data?.ENV}>
+		<Document nonce={nonce} theme={theme} env={data?.ENV} locale={data?.requestInfo.locale}>
 			{children}
 		</Document>
 	)
@@ -210,7 +229,10 @@ function App() {
 	const matches = useMatches()
 	const isOnSearchPage = matches.find((m) => m.id === 'routes/users+/index')
 	const searchBar = isOnSearchPage ? null : <SearchBar status="idle" />
+	const { t } = useTranslation()
+	const { locale } = data.requestInfo
 	useToast(data.toast)
+	useChangeLanguage(locale)
 
 	return (
 		<>
@@ -222,11 +244,12 @@ function App() {
 							{searchBar}
 						</div>
 						<div className="flex items-center gap-10">
+							<LanguageDropDown />
 							{user ? (
 								<UserDropdown />
 							) : (
 								<Button asChild variant="default" size="lg">
-									<Link to="/login">Log In</Link>
+									<Link to="/login">{t('root.login')}</Link>
 								</Button>
 							)}
 						</div>
@@ -277,6 +300,7 @@ function UserDropdown() {
 	const user = useUser()
 	const submit = useSubmit()
 	const formRef = useRef<HTMLFormElement>(null)
+	const { t } = useTranslation()
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -303,14 +327,14 @@ function UserDropdown() {
 					<DropdownMenuItem asChild>
 						<Link prefetch="intent" to={`/users/${user.username}`}>
 							<Icon className="text-body-md" name="avatar">
-								Profile
+								{t('root.profile')}
 							</Icon>
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem asChild>
 						<Link prefetch="intent" to={`/users/${user.username}/notes`}>
 							<Icon className="text-body-md" name="pencil-2">
-								Notes
+								{t('root.notes')}
 							</Icon>
 						</Link>
 					</DropdownMenuItem>
@@ -324,7 +348,7 @@ function UserDropdown() {
 					>
 						<Form action="/logout" method="POST" ref={formRef}>
 							<Icon className="text-body-md" name="exit">
-								<button type="submit">Logout</button>
+								<button type="submit">{t('root.logout')}</button>
 							</Icon>
 						</Form>
 					</DropdownMenuItem>
@@ -334,6 +358,44 @@ function UserDropdown() {
 	)
 }
 
+
+function LanguageDropDown() {
+	const { t, i18n } = useTranslation()
+	const fetcher = useFetcher()
+
+	const onValueChange = (lang: string) => {
+		i18n.changeLanguage(lang)
+		fetcher.submit(null, {
+			method: 'POST',
+			action: `/settings/change-language/${lang}`,
+		})
+	}
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button variant="secondary"> {t('root.language')} </Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent>
+				<DropdownMenuSeparator />
+				<DropdownMenuRadioGroup
+					value={i18n.language}
+					onValueChange={onValueChange}
+				>
+					<DropdownMenuRadioItem value="en">
+						{t('root.english')}
+					</DropdownMenuRadioItem>
+					<DropdownMenuRadioItem value="fr">
+						{t('root.french')}
+					</DropdownMenuRadioItem>
+					<DropdownMenuRadioItem value="es">
+						{t('root.spanish')}
+					</DropdownMenuRadioItem>
+				</DropdownMenuRadioGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
+	)
+}
 // this is a last resort error boundary. There's not much useful information we
 // can offer at this level.
 export const ErrorBoundary = GeneralErrorBoundary

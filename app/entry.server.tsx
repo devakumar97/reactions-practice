@@ -1,3 +1,4 @@
+import { resolve } from 'path'
 import { PassThrough } from 'node:stream'
 import {
 	createReadableStreamFromReadable,
@@ -14,6 +15,11 @@ import { getEnv, init } from './utils/env.server.ts'
 import { getInstanceInfo } from './utils/litefs.server.ts'
 import { NonceProvider } from './utils/nonce-provider.ts'
 import { makeTimings } from './utils/timing.server.ts'
+import { createInstance } from 'i18next'
+import Backend from 'i18next-fs-backend'
+import { I18nextProvider, initReactI18next } from 'react-i18next'
+import {i18n} from './utils/i18n'
+import { i18next } from './utils/i18next.server'
 
 const ABORT_DELAY = 5000
 
@@ -44,6 +50,22 @@ export default async function handleRequest(...args: DocRequestArgs) {
 		? 'onAllReady'
 		: 'onShellReady'
 
+	const i18nInstance = createInstance()
+	const lng = await i18next.getLocale(request)
+	const ns = i18next.getRouteNamespaces(remixContext)
+
+	await i18nInstance
+		.use(initReactI18next)
+		.use(Backend)
+		.init({
+			...i18n,
+			lng,
+			ns,
+			backend: {
+				loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json'),
+			},
+		})
+
 	const nonce = loadContext.cspNonce?.toString() ?? ''
 	return new Promise(async (resolve, reject) => {
 		let didError = false
@@ -53,7 +75,9 @@ export default async function handleRequest(...args: DocRequestArgs) {
 
 		const { pipe, abort } = renderToPipeableStream(
 			<NonceProvider value={nonce}>
-				<RemixServer context={remixContext} url={request.url} />
+				<I18nextProvider i18n={i18nInstance}>
+					<RemixServer context={remixContext} url={request.url} />
+				</I18nextProvider>
 			</NonceProvider>,
 			{
 				[callbackName]: () => {

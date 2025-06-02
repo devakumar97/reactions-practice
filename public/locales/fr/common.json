@@ -1,0 +1,49 @@
+{
+	"root.english": "Anglais",
+	"root.french": "Français",
+	"root.spanish": "espagnole",
+	"root.language": "Changer de langue",
+	"root.login": "Se connecter",
+	"root.logout": "Se déconnecter",
+	"root.notes": "Notes",
+	"root.profile": "Profil",
+	"search": "Rechercher",
+
+	"login": {
+		"welcome": "Bon retour!",
+		"enterDetails": "Veuillez entrer vos informations.",
+		"username": "Nom d'utilisateur",
+		"password": "Mot de passe",
+		"rememberMe": "Se souvenir de moi",
+		"forgotPassword": "Mot de passe oublié?",
+		"loginButton": "Se connecter",
+		"newHere": "Nouveau ici?",
+		"createAccount": "Créer un compte"
+	},
+
+	"signup": {
+		"startJourney": "Commençons votre voyage !",
+		"enterEmail": "Veuillez entrer votre email.",
+		"email": "Email",
+		"submit": "Envoyer"
+	},
+
+	"signupEmail": {
+		"welcome": "Bienvenue chez Epic Notes!",
+		"codeInfo": "Voici votre code de vérification:",
+		"clickLink": "Ou cliquez sur le lien pour commencer:"
+	},
+
+	"notes": {
+		"title": "Notes de {{owner}}",
+		"newNote": "Nouvelle note"
+	},
+	"auth": {
+		"types": {
+			"login": "Connexion",
+			"signup": "Inscription",
+			"connect": "Lier"
+		},
+		"actionWithProvider": "{{type}} avec {{label}}"
+	}
+}
