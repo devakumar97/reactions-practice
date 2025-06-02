@@ -80,6 +80,9 @@ export default function CoursesRoute() {
 		navigate(`${id}`)
 	}
 
+	const addCourse = () => {
+		navigate(`new`)
+	}
 	const editCourse = (id: string) => {
 		navigate(`${id}/edit`)
 	}
@@ -109,14 +112,18 @@ export default function CoursesRoute() {
 					</h2>
 					</Link>
 					{isOwner && (
-						<NavLink
-										to="new"
-										className={({ isActive }) =>
-											cn(navLinkDefaultClassName, isActive && 'bg-accent')
-										}
-										>
-							+ {t('coursesPage.addCourse', 'Add Course')}
-						</NavLink>
+						<Button
+						onClick={(e) => {
+
+							e.stopPropagation();
+							addCourse();
+						}}
+						className="flex items-center justify-between gap-2 px-4 py- rounded-md "
+						>
+							<Icon name="plus" className="w-4 h-4" />
+							Add Course
+							</Button>
+
 					)}
 				</div>
 
