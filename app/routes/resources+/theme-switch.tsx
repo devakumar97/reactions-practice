@@ -14,7 +14,7 @@ import {
 import { type Theme, setTheme } from '#app/utils/theme.server.ts'
 
 const ThemeFormSchema = z.object({
-	theme: z.enum(['system', 'light', 'dark']),
+	theme: z.enum(['system', 'light', 'dark', 'ghost', 'waves', 'palette']),
 	// this is useful for progressive enhancement
 	redirectTo: z.string().optional(),
 })
@@ -54,8 +54,17 @@ export function ThemeSwitch({
 
 	const optimisticMode = useOptimisticThemeMode()
 	const mode = optimisticMode ?? userPreference ?? 'system'
-	const nextMode =
-		mode === 'system' ? 'light' : mode === 'light' ? 'dark' : 'system'
+	const themes: Theme[] = [
+		'system',
+		'light',
+		'dark',
+		'ghost',
+		'waves',
+		'palette',
+	]
+	
+	const currentIndex = themes.indexOf(mode)
+	const nextMode = themes[(currentIndex + 1) % themes.length]
 	const modeLabel = {
 		light: (
 			<Icon name="sun">
@@ -71,6 +80,21 @@ export function ThemeSwitch({
 			<Icon name="laptop">
 				<span className="sr-only">System</span>
 			</Icon>
+		),
+		'ghost': (
+		<Icon name="ghost">
+			<span className="sr-only">Dracula</span>
+		</Icon>
+		),
+		'waves': (
+		<Icon name="waves">
+			<span className="sr-only">Aqua</span>
+		</Icon>
+		),
+		'palette': (
+		<Icon name="palette">
+			<span className="sr-only">Monokai</span>
+		</Icon>
 		),
 	}
 
