@@ -102,7 +102,7 @@ export function CourseEditor({
 	const { t } = useTranslation()
 
 	return (
-		<div className="absolute inset-0">
+				<div className="flex flex-col w-full space-y-6 px-4 py-6 text-foreground bg-background max-h-[80vh] overflow-y-auto rounded-lg">
 			<FormProvider context={form.context}>
 				<Form
 					method="POST"

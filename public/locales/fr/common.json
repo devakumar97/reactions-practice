@@ -54,7 +54,13 @@
 		"content": "Contenu",
 		"edit": "Éditer",
 		"delete": "supprimer",
-		"notFound": "Aucun utilisateur avec le nom d'utilisateur \"{{username}}\" n'existe"
+		"notFound": "Aucun utilisateur avec le nom d'utilisateur \"{{username}}\" n'existe",
+		"label": {
+			"title": "Titre",
+			"decription": "Description",
+			"level": "Niveau",
+			"language": "Langue"
+		}
 	},
 	"coursesIndex": {
 		"selectCourse": "Sélectionner un cours"
@@ -92,5 +98,11 @@
 		"submit": "Soumettre",
 		"select": "Sélectionner un cours",
 		"notFound": "Aucun cours avec l'identifiant \"{{courseId}}\" n'existe"
+	},
+
+	"table": {
+		"search": "Rechercher des cours...",
+		"actions": "Actions",
+		"empty": "Aucune donnée disponible"
 	}
 }

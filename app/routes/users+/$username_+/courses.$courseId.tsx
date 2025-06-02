@@ -159,14 +159,15 @@ console.log('data.course.ownerId', data.course.ownerId)
 		// 	aria-labelledby="course-title"
 		// 	tabIndex={-1}
 		// >
-			<div className="absolute inset-0 flex flex-col px-10">
+			<div className="flex flex-col space-y-6 px-4 py-6 text-foreground bg-background max-h-[80vh] overflow-y-auto rounded-lg">
+
 			<h2 id="course-title" className="mb-2 pt-12 text-h2 lg:mb-6">
 				{data.course.title}
 			</h2>
 			<div className="flex gap-6">
 
 			<p className="text-sm text-gray-500">{t(`${basePath}.language`)}: {getTranslatedLabel(basePath, 'languages', data.course.language, t)}</p>
-			<p className="text-sm text-gray-500">{t(`${basePath}.language`)}: {getTranslatedLabel(basePath, 'levels', data.course.level, t)}</p>
+			<p className="text-sm text-gray-500">{t(`${basePath}.level`)}: {getTranslatedLabel(basePath, 'levels', data.course.level, t)}</p>
 			{data.course.duration && (
 				<p className="text-sm text-gray-500">
 					{t('coursePage.duration')}: {data.course.duration} {t('coursePage.minutes')}

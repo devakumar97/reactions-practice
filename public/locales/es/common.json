@@ -54,7 +54,13 @@
 		"content": "Contenido",
 		"edit": "Editar",
 		"delete": "borrar",
-		"notFound": "No existe un usuario con el nombre de usuario \"{{username}}\""
+		"notFound": "No existe un usuario con el nombre de usuario \"{{username}}\"",
+		"label": {
+			"title": "Título",
+			"decription": "Descripción",
+			"level": "Nivel",
+			"language": "Idioma"
+		}
 	},
 	"coursesIndex": {
 		"selectCourse": "Seleccionar un curso"
@@ -92,5 +98,10 @@
 		"submit": "Enviar",
 		"select": "Seleccionar un curso",
 		"notFound": "No existe un curso con el ID \"{{courseId}}\""
+	},
+	"table": {
+		"search": "Buscar cursos...",
+		"actions": "Acciones",
+		"empty": "No hay datos disponibles"
 	}
 }

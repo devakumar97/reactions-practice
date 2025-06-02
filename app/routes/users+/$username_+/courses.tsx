@@ -1,6 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { Link, NavLink, Outlet, useLoaderData } from '@remix-run/react'
+import { Link, NavLink, Outlet, useLoaderData, useLocation, useNavigate } from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
@@ -8,10 +8,14 @@ import { cn, getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
 import { getLanguage } from '#app/utils/language-server.ts'
 import { useTranslation } from 'react-i18next'
+import { Modal } from '#app/components/ui/modal.tsx'
+import { GenericTable } from '#app/components/ui/table.tsx'
+import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
+import { Button } from '#app/components/ui/button.tsx'
 
-export async function loader({ request,params }: LoaderFunctionArgs) {
+export async function loader({ request, params }: LoaderFunctionArgs) {
 	const lang = await getLanguage(request)
-	
+
 	const owner = await prisma.user.findFirst({
 		select: {
 			id: true,
@@ -30,7 +34,12 @@ export async function loader({ request,params }: LoaderFunctionArgs) {
 					id: true,
 					translation: {
 						where: { language: { id: lang } },
-						select: { title: true },
+						select: {
+							title: true,
+							description:true,
+							level: true,
+							// language: { select: { name: true }} 
+						},
 					},
 				},
 			},
@@ -43,7 +52,9 @@ export async function loader({ request,params }: LoaderFunctionArgs) {
 	// If the course translations are not found for the selected language, fall back to a default value or handle the case
 	const formattedCourses = owner.courses.map((c) => ({
 		id: c.id,
-		title: c.translation?.[0]?.title ?? 'Untitled', // Fallback to "Untitled" if no translation exists
+		title: c.translation?.[0]?.title ?? 'Untitled',
+		description: c.translation?.[0]?.description ?? 'Unknown',
+		level: c.translation?.[0]?.level ?? 'N/A',
 	}))
 
 	return json({ owner: { ...owner, courses: formattedCourses } })
@@ -56,63 +67,86 @@ export default function CoursesRoute() {
 	const ownerDisplayName = data.owner.name ?? data.owner.username
 	const navLinkDefaultClassName =
 		'line-clamp-2 block rounded-l-full py-2 pl-8 pr-6 text-base lg:text-xl'
-		  const { t } = useTranslation()
+	const { t } = useTranslation()
 
+	const navigate = useNavigate()
+	const location = useLocation()
+	const ModalBasePath = `/users/${data.owner.username}/courses`
+	const showModal = location.pathname !== ModalBasePath
+	const closeModal = () => navigate(ModalBasePath)
+	const basePath = 'courseEditor.form'
+
+	const openModal = (id: string) => {
+		navigate(`${id}`)
+	}
+
+	const editCourse = (id: string) => {
+		navigate(`${id}/edit`)
+	}
 
 	return (
-		<main className="container flex h-full min-h-[400px] px-0 pb-12 md:px-8">
-			<div className="grid w-full grid-cols-4 bg-muted pl-2 md:container md:rounded-3xl md:pr-0">
-				<div className="relative col-span-1">
-					<div className="flex flex-col h-full">
-						<Link
+		<main className="container mx-auto flex h-full min-h-[400px] flex-col px-4 pb-12 pt-6 md:px-8">
+			{showModal && (
+				<Modal onClose={closeModal}>
+					<Outlet />
+				</Modal>
+			)}
+			<section className="w-full rounded-2xl bg-white p-6 shadow-md dark:bg-gray-900">
+				<div className="flex items-center justify-between mb-4">
+					<Link
 							to={`/users/${data.owner.username}`}
-							className="flex flex-col items-center justify-center gap-2 bg-muted pb-4 pl-8 pr-4 pt-12 lg:flex-row lg:justify-start lg:gap-4"
+							className="flex flex-col items-center justify-center gap-2 pb-4 pl-8 pr-4  lg:flex-row lg:justify-start lg:gap-4"
 						>
-							<img
+					<img
 								src={getUserImgSrc(data.owner.image?.id)}
 								alt={ownerDisplayName}
 								className="h-16 w-16 rounded-full object-cover lg:h-24 lg:w-24"
 								width={256}
 								height={256}
 							/>
-							<h1 className="text-center text-base font-bold md:text-lg lg:text-left lg:text-2xl">
-								{t('coursesPage.ownersCourses', { owner: ownerDisplayName })}
-							</h1>
-						</Link>
-						<ul className="overflow-y-auto overflow-x-hidden pb-12">
-							{isOwner ? (
-								<li className="p-1 pr-0">
-									<NavLink
+					<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+						{t('coursesPage.ownersCourses', { owner: ownerDisplayName })}
+					</h2>
+					</Link>
+					{isOwner && (
+						<NavLink
 										to="new"
 										className={({ isActive }) =>
 											cn(navLinkDefaultClassName, isActive && 'bg-accent')
 										}
-									>
-										<Icon name="plus">{t('coursesPage.addCourse')}</Icon>
-									</NavLink>
-								</li>
-							) : null}
-							{data.owner.courses.map((course) => (
-								<li key={course.id} className="p-1 pr-0">
-									<NavLink
-										to={course.id}
-										preventScrollReset
-										prefetch="intent"
-										className={({ isActive }) =>
-											cn(navLinkDefaultClassName, isActive && 'bg-accent')
-										}
-									>
-										{course.title} 
-									</NavLink>
-								</li>
-							))}
-						</ul>
-					</div>
+										>
+							+ {t('coursesPage.addCourse', 'Add Course')}
+						</NavLink>
+					)}
 				</div>
-				<div className="relative col-span-3 bg-accent md:rounded-r-3xl">
-					<Outlet />
-				</div>
-			</div>
+
+					<GenericTable
+					data={data.owner.courses}
+					searchPlaceholder={t('table.search')}
+					onRowClick={(row) => openModal(row.id)}
+					columns={[
+						{ key: 'title', label: t('coursePage.label.title', 'Title') },
+						{ key: 'description', label: t('coursePage.label.decription', 'Decription') },
+						// { key: 'language', label: t('coursePage.label.language', 'Language'), align: 'center' },
+						{ key: 'level', 
+							label: t('coursePage.label.level', 'Level'),
+							render: (row) => getTranslatedLabel(basePath, 'levels', row.level, t),
+						}
+					]}
+					actions={(row) =>
+						isOwner && (
+							<Button
+								onClick={(e) => {
+									e.stopPropagation()
+									editCourse(row.id)
+								}}
+							>
+								<Icon name="pencil-1" className='size-4'/>
+							</Button>
+						)
+					}
+				/>
+			</section>
 		</main>
 	)
 }

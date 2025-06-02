@@ -56,7 +56,13 @@
 		"content": "Content",
 		"edit": "Edit",
 		"delete": "Delete",
-		"notFound": "No user with the username \"{{username}}\" exists"
+		"notFound": "No user with the username \"{{username}}\" exists",
+		"label": {
+			"title": "Title",
+			"decription": "Decription",
+			"level": "Level",
+			"language": "Language"
+		}
 	},
 	"coursesIndex": {
 		"selectCourse": "Select a course"
@@ -94,5 +100,10 @@
 		"submit": "Submit",
 		"select": "Select a course",
 		"notFound": "No course with the id \"{{courseId}}\" exists"
+	},
+	"table": {
+		"search": "Search courses...",
+		"actions": "Actions",
+		"empty": "No data available"
 	}
 }
