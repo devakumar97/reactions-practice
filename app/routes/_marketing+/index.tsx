@@ -1,85 +1,33 @@
-import { LoaderFunctionArgs, type MetaFunction, json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+import {  type MetaFunction } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
 import {
-	Tooltip,
-	TooltipContent,
 	TooltipProvider,
-	TooltipTrigger,
 } from '#app/components/ui/tooltip.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import { getLanguage } from '#app/utils/language-server.ts'
-import { prisma } from '#app/utils/db.server.ts'
-import { invariantResponse } from '@epic-web/invariant'
+
 
 export const meta: MetaFunction = () => [{ title: 'Courses | Home' }]
-
-export async function loader({ request, params }: LoaderFunctionArgs) {
-	const lang = await getLanguage(request)
-
-	const owner = await prisma.user.findFirst({
-		select: {
-			id: true,
-			name: true,
-			username: true,
-			image: { select: { id: true } },
-			courses: {
-				where: {
-					translation: {
-						some: {
-							language: { id: lang },
-						},
-					},
-				},
-				select: {
-					id: true,
-					translation: {
-						where: { language: { id: lang } },
-						select: {
-							title: true,
-							},
-					},
-				},
-			},
-		},
-		where: { username: params.username },
-	})
-
-	invariantResponse(owner, 'Owner not found', { status: 404 })
-
-	// If the course translations are not found for the selected language, fall back to a default value or handle the case
-	const formattedCourses = owner.courses.map((c) => ({
-		id: c.id,
-		title: c.translation?.[0]?.title ?? 'Untitled',
-	}))
-
-	return json({ owner: { ...owner, courses: formattedCourses } })
-}
 
 const benefits = [
 	{
 		title: 'Create Courses',
 		description: 'Easily create, manage, and update your own courses.',
-		icon: '/icons/create.svg',
 	},
 	{
 		title: 'Track Progress',
 		description: 'Monitor what you’ve built and what’s next to learn.',
-		icon: '/icons/track.svg',
 	},
 	{
 		title: 'Learn Fast',
 		description: 'Built with learners in mind – fast, focused, simple.',
-		icon: '/icons/learn.svg',
 	},
 	{
 		title: 'Share Knowledge',
 		description: 'Let others benefit from your expertise by sharing your courses.',
-		icon: '/icons/share.svg',
 	},
 ]
 
 export default function Index() {
-	const data = useLoaderData<typeof loader>()
 	return (
 		<main className="font-poppins grid h-full place-items-center bg-background">
 			<div className="grid place-items-center px-4 py-16 xl:grid-cols-2 xl:gap-24">
