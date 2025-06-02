@@ -1,4 +1,5 @@
-import { type MetaFunction } from '@remix-run/node'
+import { LoaderFunctionArgs, type MetaFunction, json } from '@remix-run/node'
+import { Link, useLoaderData } from '@remix-run/react'
 import {
 	Tooltip,
 	TooltipContent,
@@ -6,91 +7,128 @@ import {
 	TooltipTrigger,
 } from '#app/components/ui/tooltip.tsx'
 import { cn } from '#app/utils/misc.tsx'
-import { logos } from './logos/logos.ts'
+import { getLanguage } from '#app/utils/language-server.ts'
+import { prisma } from '#app/utils/db.server.ts'
+import { invariantResponse } from '@epic-web/invariant'
 
-export const meta: MetaFunction = () => [{ title: 'Epic Notes' }]
+export const meta: MetaFunction = () => [{ title: 'Courses | Home' }]
 
-// Tailwind Grid cell classes lookup
-const columnClasses: Record<(typeof logos)[number]['column'], string> = {
-	1: 'xl:col-start-1',
-	2: 'xl:col-start-2',
-	3: 'xl:col-start-3',
-	4: 'xl:col-start-4',
-	5: 'xl:col-start-5',
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const lang = await getLanguage(request)
+
+	const owner = await prisma.user.findFirst({
+		select: {
+			id: true,
+			name: true,
+			username: true,
+			image: { select: { id: true } },
+			courses: {
+				where: {
+					translation: {
+						some: {
+							language: { id: lang },
+						},
+					},
+				},
+				select: {
+					id: true,
+					translation: {
+						where: { language: { id: lang } },
+						select: {
+							title: true,
+							},
+					},
+				},
+			},
+		},
+		where: { username: params.username },
+	})
+
+	invariantResponse(owner, 'Owner not found', { status: 404 })
+
+	// If the course translations are not found for the selected language, fall back to a default value or handle the case
+	const formattedCourses = owner.courses.map((c) => ({
+		id: c.id,
+		title: c.translation?.[0]?.title ?? 'Untitled',
+	}))
+
+	return json({ owner: { ...owner, courses: formattedCourses } })
 }
-const rowClasses: Record<(typeof logos)[number]['row'], string> = {
-	1: 'xl:row-start-1',
-	2: 'xl:row-start-2',
-	3: 'xl:row-start-3',
-	4: 'xl:row-start-4',
-	5: 'xl:row-start-5',
-	6: 'xl:row-start-6',
-}
+
+const benefits = [
+	{
+		title: 'Create Courses',
+		description: 'Easily create, manage, and update your own courses.',
+		icon: '/icons/create.svg',
+	},
+	{
+		title: 'Track Progress',
+		description: 'Monitor what you’ve built and what’s next to learn.',
+		icon: '/icons/track.svg',
+	},
+	{
+		title: 'Learn Fast',
+		description: 'Built with learners in mind – fast, focused, simple.',
+		icon: '/icons/learn.svg',
+	},
+	{
+		title: 'Share Knowledge',
+		description: 'Let others benefit from your expertise by sharing your courses.',
+		icon: '/icons/share.svg',
+	},
+]
 
 export default function Index() {
+	const data = useLoaderData<typeof loader>()
 	return (
-		<main className="font-poppins grid h-full place-items-center">
+		<main className="font-poppins grid h-full place-items-center bg-background">
 			<div className="grid place-items-center px-4 py-16 xl:grid-cols-2 xl:gap-24">
+				{/* Hero Text */}
 				<div className="flex max-w-md flex-col items-center text-center xl:order-2 xl:items-start xl:text-left">
-					<a
-						href="https://www.epicweb.dev/stack"
-						className="animate-slide-top [animation-fill-mode:backwards] xl:animate-slide-left xl:[animation-delay:0.5s] xl:[animation-fill-mode:backwards]"
-					>
-						<svg
-							className="size-20 text-foreground xl:-mt-4"
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 65 65"
-						>
-							<path
-								fill="currentColor"
-								d="M39.445 25.555 37 17.163 65 0 47.821 28l-8.376-2.445Zm-13.89 0L28 17.163 0 0l17.179 28 8.376-2.445Zm13.89 13.89L37 47.837 65 65 47.821 37l-8.376 2.445Zm-13.89 0L28 47.837 0 65l17.179-28 8.376 2.445Z"
-							></path>
-						</svg>
-					</a>
-					<h1
-						data-heading
-						className="mt-8 animate-slide-top text-4xl font-medium text-foreground [animation-delay:0.3s] [animation-fill-mode:backwards] md:text-5xl xl:mt-4 xl:animate-slide-left xl:text-6xl xl:[animation-delay:0.8s] xl:[animation-fill-mode:backwards]"
-					>
-						<a href="https://www.epicweb.dev/stack">The Epic Stack</a>
+					<h1 className="mt-8 text-4xl font-bold text-foreground md:text-5xl xl:mt-4 xl:text-6xl">
+						Your Learning Hub
 					</h1>
-					<p
-						data-paragraph
-						className="mt-6 animate-slide-top text-xl/7 text-muted-foreground [animation-delay:0.8s] [animation-fill-mode:backwards] xl:mt-8 xl:animate-slide-left xl:text-xl/6 xl:leading-10 xl:[animation-delay:1s] xl:[animation-fill-mode:backwards]"
-					>
-						Check the{' '}
-						<a
-							className="underline hover:no-underline"
-							href="https://github.com/epicweb-dev/epic-stack/blob/main/docs/getting-started.md"
-						>
-							Getting Started guide
-						</a>{' '}
-						file for how to get your project off the ground!
+					<p className="mt-6 text-xl text-muted-foreground xl:mt-8 xl:leading-10">
+						Welcome to your personal course platform. Build, manage, and learn faster than ever before.
 					</p>
+					{/* <div className="mt-8 flex flex-wrap gap-4">
+						<Link
+							to={`/users/${data.owner.username}.courses`}
+							className="rounded-full bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+						>
+							View Courses
+						</Link>
+						<Link
+							to={`/users/${data.owner.username}.courses`}
+							className="rounded-full border border-blue-600 px-6 py-3 text-blue-600 hover:bg-blue-50"
+						>
+							Add New Course
+						</Link>
+					</div> */}
 				</div>
-				<ul className="mt-16 flex max-w-3xl flex-wrap justify-center gap-2 sm:gap-4 xl:mt-0 xl:grid xl:grid-flow-col xl:grid-cols-5 xl:grid-rows-6">
+
+				{/* Benefits Grid */}
+				<ul className="mt-16 flex max-w-3xl flex-wrap justify-center gap-4 xl:mt-0 xl:grid xl:grid-cols-2 xl:grid-rows-2">
 					<TooltipProvider>
-						{logos.map((logo, i) => (
+						{benefits.map((benefit, i) => (
 							<li
-								key={logo.href}
+								key={benefit.title}
 								className={cn(
-									columnClasses[logo.column],
-									rowClasses[logo.row],
-									'animate-roll-reveal [animation-fill-mode:backwards]',
+									'flex flex-col items-center justify-center rounded-2xl bg-violet-600/10 p-6 text-center dark:bg-violet-200 dark:text-black',
+									'animate-fade-in-up [animation-fill-mode:backwards]',
 								)}
-								style={{ animationDelay: `${i * 0.07}s` }}
+								style={{ animationDelay: `${i * 0.1}s` }}
 							>
-								<Tooltip>
+								{/* <Tooltip>
 									<TooltipTrigger asChild>
-										<a
-											href={logo.href}
-											className="grid size-20 place-items-center rounded-2xl bg-violet-600/10 p-4 transition hover:-rotate-6 hover:bg-violet-600/15 dark:bg-violet-200 dark:hover:bg-violet-100 sm:size-24"
-										>
-											<img src={logo.src} alt="" />
-										</a>
+										<div className="mb-3 size-16 sm:size-20">
+											<img src={benefit.icon} alt={benefit.title} className="mx-auto" />
+										</div>
 									</TooltipTrigger>
-									<TooltipContent>{logo.alt}</TooltipContent>
-								</Tooltip>
+									<TooltipContent>{benefit.description}</TooltipContent>
+								</Tooltip> */}
+								<h3 className="mt-2 text-lg font-semibold">{benefit.title}</h3>
+								<p className="mt-1 text-sm text-muted-foreground">{benefit.description}</p>
 							</li>
 						))}
 					</TooltipProvider>

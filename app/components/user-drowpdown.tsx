@@ -43,13 +43,6 @@ export function UserDropdown() {
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                        <Link prefetch="intent" to={`/users/${user.username}/notes`}>
-                            <Icon className="text-body-md" name="pencil-2">
-                                {t('userDropdown.root.notes')}
-                            </Icon>
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
                         <Link prefetch="intent" to={`/users/${user.username}/courses`}>
                             <Icon className="text-body-md" name="pencil-2">
                                 {t('userDropdown.root.courses')}
