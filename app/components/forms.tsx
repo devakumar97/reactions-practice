@@ -11,6 +11,7 @@ import {
 import { Input } from './ui/input.tsx'
 import { Label } from './ui/label.tsx'
 import { Textarea } from './ui/textarea.tsx'
+import { cn } from '#app/utils/misc.tsx'
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined
 
@@ -57,6 +58,48 @@ export function Field({
 				aria-describedby={errorId}
 				{...inputProps}
 			/>
+			<div className="min-h-[32px] px-4 pb-3 pt-1">
+				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
+			</div>
+		</div>
+	)
+}
+export function DropdownField({
+	labelProps,
+	selectProps,
+	errors,
+	className,
+}: {
+	labelProps: React.LabelHTMLAttributes<HTMLLabelElement>
+	selectProps: React.SelectHTMLAttributes<HTMLSelectElement>
+	errors?: ListOfErrors
+	className?: string
+}) {
+	const fallbackId = useId()
+	const id = selectProps.id ?? fallbackId
+	const errorId = errors?.length ? `${id}-error` : undefined
+
+	return (
+		<div className={className}>
+			{/* Label */}
+			<Label htmlFor={id} {...labelProps} />
+			<br />
+
+			{/* Dropdown (Select) */}
+			<select
+				id={id}
+				aria-invalid={errorId ? "true" : undefined}
+				aria-describedby={errorId}
+				{...selectProps}
+				className={cn(
+					"rounded-md border border-border bg-background text-foreground px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring",
+					selectProps.className
+				)}
+			>
+				{selectProps.children}
+			</select>
+
+			{/* Error Messages */}
 			<div className="min-h-[32px] px-4 pb-3 pt-1">
 				{errorId ? <ErrorList id={errorId} errors={errors} /> : null}
 			</div>

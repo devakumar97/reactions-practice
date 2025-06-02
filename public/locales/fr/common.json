@@ -1,49 +1,108 @@
 {
 	"root.english": "Anglais",
 	"root.french": "Français",
-	"root.spanish": "espagnole",
+	"root.spanish": "Espagnol",
 	"root.language": "Changer de langue",
 	"root.login": "Se connecter",
-	"root.logout": "Se déconnecter",
-	"root.notes": "Notes",
-	"root.profile": "Profil",
 	"search": "Rechercher",
-
+	"userDropdown": {
+		"root.logout": "Se déconnecter",
+		"root.notes": "Notes",
+		"root.courses": "Cours",
+		"root.profile": "Profil"
+	},
 	"login": {
-		"welcome": "Bon retour!",
+		"welcome": "Bon retour !",
 		"enterDetails": "Veuillez entrer vos informations.",
 		"username": "Nom d'utilisateur",
 		"password": "Mot de passe",
 		"rememberMe": "Se souvenir de moi",
-		"forgotPassword": "Mot de passe oublié?",
+		"forgotPassword": "Mot de passe oublié ?",
 		"loginButton": "Se connecter",
-		"newHere": "Nouveau ici?",
+		"newHere": "Nouveau ici ?",
 		"createAccount": "Créer un compte"
 	},
-
 	"signup": {
 		"startJourney": "Commençons votre voyage !",
-		"enterEmail": "Veuillez entrer votre email.",
-		"email": "Email",
-		"submit": "Envoyer"
+		"enterEmail": "Veuillez entrer votre adresse e-mail.",
+		"email": "E-mail",
+		"submit": "Soumettre"
 	},
-
 	"signupEmail": {
-		"welcome": "Bienvenue chez Epic Notes!",
-		"codeInfo": "Voici votre code de vérification:",
-		"clickLink": "Ou cliquez sur le lien pour commencer:"
-	},
-
-	"notes": {
-		"title": "Notes de {{owner}}",
-		"newNote": "Nouvelle note"
+		"welcome": "Bienvenue sur Epic Notes !",
+		"codeInfo": "Voici votre code de vérification :",
+		"clickLink": "Ou cliquez sur le lien pour commencer :"
 	},
 	"auth": {
 		"types": {
 			"login": "Connexion",
 			"signup": "Inscription",
-			"connect": "Lier"
+			"connect": "Connecter"
 		},
 		"actionWithProvider": "{{type}} avec {{label}}"
+	},
+	"coursesPage": {
+		"addCourse": "Ajouter un cours",
+		"ownersCourses": "Cours de {{owner}}"
+	},
+	"coursePage": {
+		"language": "Langue",
+		"level": "Niveau",
+		"duration": "Durée",
+		"minutes": "minutes",
+		"description": "Description",
+		"content": "Contenu",
+		"edit": "Éditer",
+		"delete": "supprimer",
+		"notFound": "Aucun utilisateur avec le nom d'utilisateur \"{{username}}\" n'existe",
+		"label": {
+			"title": "Titre",
+			"decription": "Description",
+			"level": "Niveau",
+			"language": "Langue"
+		}
+	},
+	"coursesIndex": {
+		"selectCourse": "Sélectionner un cours"
+	},
+	"courseEdit": {
+		"notFound": "Aucun cours avec l'identifiant \"{{courseId}}\" n'existe"
+	},
+	"courseEditor": {
+		"form": {
+			"title": "Titre",
+			"description": "Description",
+			"content": "Contenu",
+			"duration": "Durée (en minutes)",
+			"language": "Langue",
+			"level": "Niveau",
+			"images": "Images",
+			"altText": "Texte alternatif",
+			"addImage": "Ajouter une image",
+			"removeImage": "Supprimer l'image {{index}}",
+			"newImage": "nouvelle",
+			"selectLanguage": "Choisissez une langue",
+			"languages": {
+				"en": "Anglais",
+				"fr": "Français",
+				"es": "Espagnol"
+			},
+			"selectLevel": "Choisissez un niveau",
+			"levels": {
+				"beginner": "Débutant",
+				"intermediate": "Intermédiaire",
+				"advanced": "Avancé"
+			}
+		},
+		"reset": "Réinitialiser",
+		"submit": "Soumettre",
+		"select": "Sélectionner un cours",
+		"notFound": "Aucun cours avec l'identifiant \"{{courseId}}\" n'existe"
+	},
+
+	"table": {
+		"search": "Rechercher des cours...",
+		"actions": "Actions",
+		"empty": "Aucune donnée disponible"
 	}
 }
