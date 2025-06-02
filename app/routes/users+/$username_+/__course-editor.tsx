@@ -110,7 +110,7 @@ export function CourseEditor({
 					{...getFormProps(form)}
 					encType="multipart/form-data"
 				   >
-					<button type="submit" className="hidden" />
+					<Button type="submit" className="hidden" />
 					{course ? <input type="hidden" name="id" value={course.id} /> : null}
 					<div className="flex flex-col gap-1">
 						<Field
