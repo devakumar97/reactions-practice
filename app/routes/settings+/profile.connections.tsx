@@ -26,10 +26,12 @@ import {
 	providerIcons,
 	providerNames,
 } from '#app/utils/connections.tsx'
-import { prisma } from '#app/utils/db.server.ts'
+import { db } from '#app/utils/db.server.ts'
 import { makeTimings } from '#app/utils/timing.server.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type BreadcrumbHandle } from './profile.tsx'
+import { users, passwords, connections } from '../../../drizzle/schema.ts'
+import { and, count, eq, gt, isNotNull, or } from 'drizzle-orm'
 
 export const handle: BreadcrumbHandle & SEOHandle = {
 	breadcrumb: <Icon name="link-2">Connections</Icon>,
@@ -37,27 +39,35 @@ export const handle: BreadcrumbHandle & SEOHandle = {
 }
 
 async function userCanDeleteConnections(userId: string) {
-	const user = await prisma.user.findUnique({
-		select: {
-			password: { select: { userId: true } },
-			_count: { select: { connections: true } },
-		},
-		where: { id: userId },
-	})
-	// user can delete their connections if they have a password
-	if (user?.password) return true
-	// users have to have more than one remaining connection to delete one
-	return Boolean(user?._count.connections && user?._count.connections > 1)
+	const user = await db
+		.select({ countConnections: count(connections.id) })
+		.from(users)
+		.leftJoin(passwords, eq(users.id, passwords.userId))
+		.leftJoin(connections, eq(users.id, connections.userId))
+		.groupBy(users.id)
+		.where(eq(users.id, userId))
+		// user can delete all their connections if they have a password
+		// otherwise, they must keep at least one connection
+		.having(({ countConnections }) =>
+			or(gt(countConnections, 1), isNotNull(passwords.userId)),
+		)
+	return Boolean(user)
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
 	const timings = makeTimings('profile connections loader')
-	const rawConnections = await prisma.connection.findMany({
-		select: { id: true, providerName: true, providerId: true, createdAt: true },
-		where: { userId },
+	const rawConnections = await db.query.connections.findMany({
+		columns: {
+			id: true,
+			providerName: true,
+			providerId: true,
+			createdAt: true,
+		},
+		where: eq(connections.userId, userId),
 	})
-	const connections: Array<{
+	
+	const connectionss: Array<{
 		providerName: ProviderName
 		id: string
 		displayName: string
@@ -73,7 +83,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			connection.providerId,
 			{ timings },
 		)
-		connections.push({
+		connectionss.push({
 			...connectionData,
 			providerName,
 			id: connection.id,
@@ -83,7 +93,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	return json(
 		{
-			connections,
+			connectionss,
 			canDeleteConnections: await userCanDeleteConnections(userId),
 		},
 		{ headers: { 'Server-Timing': timings.toString() } },
@@ -110,12 +120,9 @@ export async function action({ request }: ActionFunctionArgs) {
 	)
 	const connectionId = formData.get('connectionId')
 	invariantResponse(typeof connectionId === 'string', 'Invalid connectionId')
-	await prisma.connection.delete({
-		where: {
-			id: connectionId,
-			userId: userId,
-		},
-	})
+	await db
+		.delete(connections)
+		.where(and(eq(connections.id, connectionId), eq(connections.userId, userId)))
 	const toastHeaders = await createToastHeaders({
 		title: 'Deleted',
 		description: 'Your connection has been deleted.',
@@ -128,13 +135,13 @@ export default function Connections() {
 
 	return (
 		<div className="mx-auto max-w-md">
-			{data.connections.length ? (
+			{data.connectionss.length ? (
 				<div className="flex flex-col gap-2">
 					<p>Here are your current connections:</p>
 					<ul className="flex flex-col gap-4">
-						{data.connections.map((c) => (
+						{data.connectionss.map((c) => (
 							<li key={c.id}>
-								<Connection
+								<ConnectionComponent
 									connection={c}
 									canDelete={data.canDeleteConnections}
 								/>
@@ -158,11 +165,11 @@ export default function Connections() {
 	)
 }
 
-function Connection({
+function ConnectionComponent({
 	connection,
 	canDelete,
 }: {
-	connection: SerializeFrom<typeof loader>['connections'][number]
+	connection: SerializeFrom<typeof loader>['connectionss'][number]
 	canDelete: boolean
 }) {
 	const deleteFetcher = useFetcher<typeof action>()

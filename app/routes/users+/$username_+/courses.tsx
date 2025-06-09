@@ -3,7 +3,7 @@ import { json, type LoaderFunctionArgs } from '@remix-run/node'
 import { Link, NavLink, Outlet, useLoaderData, useLocation, useNavigate } from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
-import { prisma } from '#app/utils/db.server.ts'
+import { db } from '#app/utils/db.server.ts'
 import { cn, getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
 import { getLanguage } from '#app/utils/language-server.ts'
@@ -12,49 +12,65 @@ import { Modal } from '#app/components/ui/modal.tsx'
 import { GenericTable } from '#app/components/ui/table.tsx'
 import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
 import { Button } from '#app/components/ui/button.tsx'
+import { eq } from 'drizzle-orm'
+import { courseTranslations, users } from '../../../../drizzle/schema'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const lang = await getLanguage(request)
 
-	const owner = await prisma.user.findFirst({
-		select: {
+	if (!params.username) {
+		throw new Response('Username is required', { status: 400 })
+	}
+
+	const owner = await db.query.users.findFirst({
+		columns: {
 			id: true,
 			name: true,
 			username: true,
-			image: { select: { id: true } },
-			courses: {
-				where: {
-					translation: {
-						some: {
-							language: { id: lang },
-						},
-					},
-				},
-				select: {
-					id: true,
-					translation: {
-						where: { language: { id: lang } },
-						select: {
-							title: true,
-							description:true,
-							level: true,
-							// language: { select: { name: true }} 
-						},
-					},
-				},
-			},
 		},
-		where: { username: params.username },
-	})
+  	where: eq(users.username, params.username),
+  	with: {
+    image: {
+      columns: {
+        id: true,
+      },
+    },
+    courses: {
+      where: (course, { exists, and }) =>
+        exists(
+          db.select().from(courseTranslations).where(
+            and(
+              eq(courseTranslations.courseId, course.id),
+              eq(courseTranslations.languageId, lang)
+            )
+          )
+        ),
+      columns: {
+        id: true,
+      },
+      with: {
+        translations: {
+          where: eq(courseTranslations.languageId, lang),
+          columns: {
+            title: true,
+            description: true,
+            level: true,
+          },
+        },
+      },
+    },
+  },
+
+})
 
 	invariantResponse(owner, 'Owner not found', { status: 404 })
 
 	// If the course translations are not found for the selected language, fall back to a default value or handle the case
 	const formattedCourses = owner.courses.map((c) => ({
 		id: c.id,
-		title: c.translation?.[0]?.title ?? 'Untitled',
-		description: c.translation?.[0]?.description ?? 'Unknown',
-		level: c.translation?.[0]?.level ?? 'N/A',
+		title: c.translations?.[0]?.title ?? 'Untitled',
+		description: c.translations?.[0]?.description ?? 'Unknown',
+		level: c.translations?.[0]?.level ?? 'N/A',
 	}))
 
 	return json({ owner: { ...owner, courses: formattedCourses } })

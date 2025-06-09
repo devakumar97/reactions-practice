@@ -25,6 +25,8 @@ import { cn, getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
 import { type action } from './__course-editor.server'
 import { useTranslation } from 'react-i18next'
 import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
+import { type InferSelectModel } from 'drizzle-orm'
+import { type courses, type courseImages } from '../../../../drizzle/schema'
 
 const titleMinLength = 1
 const titleMaxLength = 100
@@ -63,8 +65,8 @@ export function CourseEditor({
 	course,
 }: {
 	course?: SerializeFrom<
-	Pick<Course, 'id' | 'duration'> & {
-		images: Array<Pick<CourseImage, 'id' | 'altText'>>
+	Pick<InferSelectModel<typeof courses>, 'id' | 'duration'> & {
+		images: Array<Pick<InferSelectModel<typeof courseImages>, 'id' | 'altText'>>
 		translation: {
 			languageId: string
 			title: string

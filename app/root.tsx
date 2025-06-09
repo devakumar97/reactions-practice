@@ -35,7 +35,7 @@ import {
 import tailwindStyleSheetUrl from './styles/tailwind.css?url'
 import { getUserId, logout } from './utils/auth.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { prisma } from './utils/db.server.ts'
+import { drizzle } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { honeypot } from './utils/honeypot.server.ts'
 import { combineHeaders, getDomainUrl } from './utils/misc.tsx'
@@ -49,9 +49,10 @@ import { useTranslation } from 'react-i18next'
 import { getLanguage } from './utils/language-server.ts'
 import { UserDropdown } from './components/user-drowpdown.tsx'
 import { LanguageDropDown } from './components/language-dropdown.tsx'
-
 import { io, type Socket } from 'socket.io-client'
 import { SocketProvider } from '#app/utils/context'
+import { eq } from 'drizzle-orm'
+import {user} from '../drizzle/schema.ts'
 
 export const links: LinksFunction = () => {
 	return [

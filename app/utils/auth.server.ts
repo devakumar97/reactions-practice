@@ -1,13 +1,22 @@
-import { type Connection, type Password, type User } from '@prisma/client'
 import { redirect } from '@remix-run/node'
 import bcrypt from 'bcryptjs'
 import { Authenticator } from 'remix-auth'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { connectionSessionStorage, providers } from './connections.server.ts'
-import { prisma } from './db.server.ts'
+import {
+	connections,
+	passwords,
+	roles,
+	userToRole,
+	sessions,
+	users,
+	userImages,
+} from '../../drizzle/schema'
 import { combineHeaders, downloadFile } from './misc.tsx'
 import { type ProviderUser } from './providers/provider.ts'
 import { authSessionStorage } from './session.server.ts'
+import { gt, and, eq, sql, type InferSelectModel } from 'drizzle-orm'
+import { db, first } from './db.server.ts'
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
 export const getSessionExpirationDate = () =>
@@ -29,18 +38,21 @@ export async function getUserId(request: Request) {
 	)
 	const sessionId = authSession.get(sessionKey)
 	if (!sessionId) return null
-	const session = await prisma.session.findUnique({
-		select: { user: { select: { id: true } } },
-		where: { id: sessionId, expirationDate: { gt: new Date() } },
+	const session = await db.query.sessions.findFirst({
+		with: { user: { columns: { id: true } } },
+		where: and(
+			eq(sessions.id, sessionId),
+			gt(sessions.expirationDate, new Date()),
+		),
 	})
-	if (!session?.user) {
+	if (!session?.userId) {
 		throw redirect('/', {
 			headers: {
 				'set-cookie': await authSessionStorage.destroySession(authSession),
 			},
 		})
 	}
-	return session.user.id
+	return session.userId
 }
 
 export async function requireUserId(
@@ -74,18 +86,22 @@ export async function login({
 	username,
 	password,
 }: {
-	username: User['username']
+	username: InferSelectModel<typeof users>['username']
 	password: string
 }) {
 	const user = await verifyUserPassword({ username }, password)
 	if (!user) return null
-	const session = await prisma.session.create({
-		select: { id: true, expirationDate: true, userId: true },
-		data: {
+	const [session] = await db
+		.insert(sessions)
+		.values({
 			expirationDate: getSessionExpirationDate(),
 			userId: user.id,
-		},
-	})
+		})
+		.returning({
+			id: sessions.id,
+			expirationDate: sessions.expirationDate,
+			userId: sessions.userId,
+		})
 	return session
 }
 
@@ -93,21 +109,15 @@ export async function resetUserPassword({
 	username,
 	password,
 }: {
-	username: User['username']
+	username: InferSelectModel<typeof users>['username']
 	password: string
 }) {
 	const hashedPassword = await getPasswordHash(password)
-	return prisma.user.update({
-		where: { username },
-		data: {
-			password: {
-				update: {
-					hash: hashedPassword,
-				},
-			},
-		},
-	})
-}
+	return db
+		.update(passwords)
+		.set({ hash: hashedPassword })
+		.from(users)
+		.where(and(eq(users.username, username), eq(users.id, passwords.userId)))}
 
 export async function signup({
 	email,
@@ -115,34 +125,52 @@ export async function signup({
 	password,
 	name,
 }: {
-	email: User['email']
-	username: User['username']
-	name: User['name']
+	email: InferSelectModel<typeof users>['email']
+	username: InferSelectModel<typeof users>['username']
+	name: InferSelectModel<typeof users>['name']
 	password: string
 }) {
-	const hashedPassword = await getPasswordHash(password)
+	return await db.transaction(async (tx) => {
+    // 1. Create the User
+    const user = await tx
+      .insert(users)
+      .values({
+        email: email.toLowerCase(),
+        username: username.toLowerCase(),
+        name,
+      })
+      .returning()
+      .then(first); // Get the inserted user row
 
-	const session = await prisma.session.create({
-		data: {
-			expirationDate: getSessionExpirationDate(),
-			user: {
-				create: {
-					email: email.toLowerCase(),
-					username: username.toLowerCase(),
-					name,
-					roles: { connect: { name: 'user' } },
-					password: {
-						create: {
-							hash: hashedPassword,
-						},
-					},
-				},
-			},
-		},
-		select: { id: true, expirationDate: true },
-	})
+    // 2. Store hashed password
+    await tx.insert(passwords).values({
+      hash: await getPasswordHash(password),
+      userId: user.id,
+    });
 
-	return session
+    // 3. Attach default "user" role
+    await tx.insert(userToRole).select(
+      tx
+        .select({
+          roleId: roles.id,
+          userId: sql`${user.id}`.as('userId'), // Inline raw SQL injection of ID
+        })
+        .from(roles)
+        .where(eq(roles.name, 'user'))
+    );
+
+    // 4. Create a session
+    const session = await tx
+      .insert(sessions)
+      .values({
+        expirationDate: getSessionExpirationDate(),
+        userId: user.id,
+      })
+      .returning()
+      .then(first);
+
+    return session;
+  });
 }
 
 export async function signupWithConnection({
@@ -153,33 +181,58 @@ export async function signupWithConnection({
 	providerName,
 	imageUrl,
 }: {
-	email: User['email']
-	username: User['username']
-	name: User['name']
-	providerId: Connection['providerId']
-	providerName: Connection['providerName']
+	email: InferSelectModel<typeof users>['email']
+	username: InferSelectModel<typeof users>['username']
+	name: InferSelectModel<typeof users>['name']
+	providerId: InferSelectModel<typeof connections>['providerId']
+	providerName: InferSelectModel<typeof connections>['providerName']
 	imageUrl?: string
 }) {
-	const session = await prisma.session.create({
-		data: {
-			expirationDate: getSessionExpirationDate(),
-			user: {
-				create: {
-					email: email.toLowerCase(),
-					username: username.toLowerCase(),
-					name,
-					roles: { connect: { name: 'user' } },
-					connections: { create: { providerId, providerName } },
-					image: imageUrl
-						? { create: await downloadFile(imageUrl) }
-						: undefined,
-				},
-			},
-		},
-		select: { id: true, expirationDate: true },
-	})
+	return await db.transaction(async (tx) => {
+		const user = await tx
+			.insert(users)
+			.values({
+				email: email.toLowerCase(),
+				username: username.toLowerCase(),
+				name,
+			})
+			.returning()
+			.then(first)
 
-	return session
+		await tx.insert(userToRole).select(
+			tx
+				.select({
+					roleId: roles.id,
+					userId: sql`${user.id}`.as('userId'),
+				})
+				.from(roles)
+				.where(eq(roles.name, 'user')),
+		)
+
+		await tx.insert(connections).values({
+			providerId,
+			providerName,
+			userId: user.id,
+		})
+
+		if (imageUrl) {
+			await tx.insert(userImages).values({
+				...(await downloadFile(imageUrl)),
+				userId: user.id,
+			})
+		}
+
+		const session = await tx
+			.insert(sessions)
+			.values({
+				expirationDate: getSessionExpirationDate(),
+				userId: user.id,
+			})
+			.returning()
+			.then(first)
+
+		return session
+	})
 }
 
 export async function logout(
@@ -201,7 +254,10 @@ export async function logout(
 	if (sessionId) {
 		// the .catch is important because that's what triggers the query.
 		// learn more about PrismaPromise: https://www.prisma.io/docs/orm/reference/prisma-client-reference#prismapromise-behavior
-		void prisma.session.deleteMany({ where: { id: sessionId } }).catch(() => {})
+		void db
+			.delete(sessions)
+			.where(eq(sessions.id, sessionId))
+			.catch(() => {})
 	}
 	throw redirect(safeRedirect(redirectTo), {
 		...responseInit,
@@ -218,12 +274,17 @@ export async function getPasswordHash(password: string) {
 }
 
 export async function verifyUserPassword(
-	where: Pick<User, 'username'> | Pick<User, 'id'>,
-	password: Password['hash'],
+	where:
+		| Pick<InferSelectModel<typeof users>, 'username'>
+		| Pick<InferSelectModel<typeof users>, 'id'>,
+	password: InferSelectModel<typeof passwords>['hash'],
 ) {
-	const userWithPassword = await prisma.user.findUnique({
-		where,
-		select: { id: true, password: { select: { hash: true } } },
+	const userWithPassword = await db.query.users.findFirst({
+		where:
+			'username' in where
+				? eq(users.username, where.username)
+				: eq(users.id, where.id),
+		with: { password: { columns: { hash: true } } },
 	})
 
 	if (!userWithPassword || !userWithPassword.password) {

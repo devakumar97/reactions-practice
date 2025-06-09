@@ -8,18 +8,25 @@ import setCookieParser from 'set-cookie-parser'
 import { test } from 'vitest'
 import { loader as rootLoader } from '#app/root.tsx'
 import { getSessionExpirationDate, sessionKey } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
+import { db } from '#app/utils/db.server.ts'
 import { authSessionStorage } from '#app/utils/session.server.ts'
 import { createUser, getUserImages } from '#tests/db-utils.ts'
 import { default as UsernameRoute, loader } from './$username.tsx'
+import { sessions, users, userImages } from '../../../drizzle/schema.ts'
+import { invariant } from '@epic-web/invariant'
 
 test('The user profile when not logged in as self', async () => {
-	const userImages = await getUserImages()
+	const usersImages = await getUserImages()
 	const userImage =
-		userImages[faker.number.int({ min: 0, max: userImages.length - 1 })]
-	const user = await prisma.user.create({
-		select: { id: true, username: true, name: true },
-		data: { ...createUser(), image: { create: userImage } },
+		usersImages[faker.number.int({ min: 0, max: usersImages.length - 1 })]
+	const [user] = await db
+		.insert(users)
+		.values(createUser())
+		.returning({ id: users.id, username: users.username, name: users.name })
+	invariant(user, 'User not found')
+	await db.insert(userImages).values({
+		userId: user.id,
+		...userImage!,
 	})
 	const App = createRemixStub([
 		{
@@ -38,20 +45,26 @@ test('The user profile when not logged in as self', async () => {
 })
 
 test('The user profile when logged in as self', async () => {
-	const userImages = await getUserImages()
+	const usersImages = await getUserImages()
 	const userImage =
-		userImages[faker.number.int({ min: 0, max: userImages.length - 1 })]
-	const user = await prisma.user.create({
-		select: { id: true, username: true, name: true },
-		data: { ...createUser(), image: { create: userImage } },
+		usersImages[faker.number.int({ min: 0, max: usersImages.length - 1 })]
+	const [user] = await db
+		.insert(users)
+		.values(createUser())
+		.returning({ id: users.id, username: users.username, name: users.name })
+	invariant(user, 'User not found')
+	await db.insert(userImages).values({
+		userId: user.id,
+		...userImage!,
 	})
-	const session = await prisma.session.create({
-		select: { id: true },
-		data: {
+	const [session] = await db
+		.insert(sessions)
+		.values({
 			expirationDate: getSessionExpirationDate(),
 			userId: user.id,
-		},
-	})
+		})
+		.returning({ id: sessions.id })
+	invariant(session, 'Session not found')
 
 	const authSession = await authSessionStorage.getSession()
 	authSession.set(sessionKey, session.id)

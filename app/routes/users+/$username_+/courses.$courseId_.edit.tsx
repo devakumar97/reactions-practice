@@ -3,48 +3,58 @@ import { json, type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
+import { db } from '#app/utils/db.server.ts'
 import { CourseEditor } from './__course-editor.tsx'
 import { useTranslation } from 'react-i18next'
+import { eq, and } from 'drizzle-orm'
+import { courses, courseTranslations } from '../../../../drizzle/schema.ts'
 
 export { action } from './__course-editor.server.tsx'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
-	const course = await prisma.course.findFirst({
-  select: {
-    id: true,
-    duration: true,
-    images: {
-      select: {
-        id: true,
-        altText: true,
-        contentType: true,
-      },
-    },
-    translation: {
-      where: {
-        languageId: params.languageId, // or your current language id from params or session
-      },
-      select: {
-        title: true,
-        description: true,
-        content: true,
-        level: true,
-      },
-      take: 1,
-    },
-  },
-  where: {
-    id: params.courseId,
-    ownerId: userId,
-  },
+
+  if (!params.courseId) {
+		throw new Response('CourseId is required', { status: 400 })
+	}
+  if (!params.languageId) {
+		throw new Response('languageId is required', { status: 400 })
+	}
+  
+	const course = await db.query.courses.findFirst({
+	where: and(
+		eq(courses.id, params.courseId),
+		eq(courses.ownerId, userId),
+	),
+	with: {
+		images: {
+			columns: {
+				id: true,
+				altText: true,
+				contentType: true,
+			},
+		},
+		translations: {
+			where: eq(courseTranslations.languageId, params.languageId),
+			limit: 1,
+			columns: {
+				title: true,
+				description: true,
+				content: true,
+				level: true,
+			},
+		},
+	},
+	columns: {
+		id: true,
+		duration: true,
+	},
 });
 
 const courseWithTranslation = course
   ? {
       ...course,
-      translation: course.translation[0] ?? null,
+      translation: course.translations[0] ?? null,
 	  title: '',
     description: '',
     content: '',

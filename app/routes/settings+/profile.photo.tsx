@@ -23,13 +23,15 @@ import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
+import { db } from '#app/utils/db.server.ts'
 import {
 	getUserImgSrc,
 	useDoubleCheck,
 	useIsPending,
 } from '#app/utils/misc.tsx'
 import { type BreadcrumbHandle } from './profile.tsx'
+import { eq } from 'drizzle-orm'
+import { users, userImages } from '../../../drizzle/schema.ts'
 
 export const handle: BreadcrumbHandle & SEOHandle = {
 	breadcrumb: <Icon name="avatar">Photo</Icon>,
@@ -60,13 +62,19 @@ const PhotoFormSchema = z.discriminatedUnion('intent', [
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-		select: {
+	const user = await db.query.users.findFirst({
+		where: eq(users.id, userId),
+		columns: {
 			id: true,
 			name: true,
 			username: true,
-			image: { select: { id: true } },
+			},
+		with: {
+			image: {
+				columns: {
+					id: true,
+				},
+			},
 		},
 	})
 	invariantResponse(user, 'User not found', { status: 404 })
@@ -105,15 +113,15 @@ export async function action({ request }: ActionFunctionArgs) {
 	const { image, intent } = submission.value
 
 	if (intent === 'delete') {
-		await prisma.userImage.deleteMany({ where: { userId } })
+		await db.delete(userImages).where(eq(userImages.userId, userId))
 		return redirect('/settings/profile')
 	}
 
-	await prisma.$transaction(async ($prisma) => {
-		await $prisma.userImage.deleteMany({ where: { userId } })
-		await $prisma.user.update({
-			where: { id: userId },
-			data: { image: { create: image } },
+	await db.transaction(async (tx) => {
+		await tx.delete(userImages).where(eq(userImages.userId, userId))
+		await tx.insert(userImages).values({
+			userId,
+			...image!,
 		})
 	})
 
