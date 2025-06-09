@@ -8,6 +8,8 @@ import { Icon } from '#app/components/ui/icon.tsx'
 import { prisma } from '#app/utils/db.server.ts'
 import { getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
+import { useEffect } from 'react'
+import { useSocket } from '#app/utils/context.tsx'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const user = await prisma.user.findFirst({
@@ -34,7 +36,19 @@ export default function ProfileRoute() {
 	const userDisplayName = user.name ?? user.username
 	const loggedInUser = useOptionalUser()
 	const isLoggedInUser = data.user.id === loggedInUser?.id
+	const socket = useSocket()
 
+	useEffect(() => {
+		if (!socket) return
+		socket.on("event", (data: any) => {
+			console.log(data)
+		})
+	}, [socket])
+	const handlePing = (event: { preventDefault: () => void }) => {
+		event.preventDefault()
+		socket?.emit("event", "ping")
+	}
+	
 	return (
 		<div className="container mb-48 mt-36 flex flex-col items-center justify-center">
 			<Spacer size="4xs" />
@@ -91,6 +105,12 @@ export default function ProfileRoute() {
 								</Link>
 							</Button>
 						)}
+						<Button
+							variant={isLoggedInUser ? 'default' : 'outline'}
+							size={'default'}
+							onClick={handlePing}>
+							Ping
+						</Button>
 					</div>
 				</div>
 			</div>

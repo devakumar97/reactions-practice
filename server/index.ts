@@ -11,6 +11,8 @@ import rateLimit from 'express-rate-limit'
 import getPort, { portNumbers } from 'get-port'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import { Server } from 'socket.io'
+import { createServer } from 'http'
 
 const MODE = process.env.NODE_ENV ?? 'development'
 const IS_PROD = MODE === 'production'
@@ -243,13 +245,27 @@ const desiredPort = Number(process.env.PORT || 3000)
 const portToUse = await getPort({
 	port: portNumbers(desiredPort, desiredPort + 100),
 })
+
+const server = createServer(app)
+
+// Create new instance of socket.io
+const io = new Server(server)
+
 const portAvailable = desiredPort === portToUse
 if (!portAvailable && !IS_DEV) {
 	console.log(`⚠️ Port ${desiredPort} is not available.`)
 	process.exit(1)
 }
 
-const server = app.listen(portToUse, () => {
+server.listen(portToUse, () => {
+	io.on("connection", (socket) => {
+	console.log(socket.id, "connected");
+	socket.emit("confirmation", "connected!");
+	socket.on("event", (data) => {
+		console.log(socket.id, data);
+		socket.emit("event", "pong");
+	});
+});
 	if (!portAvailable) {
 		console.warn(
 			chalk.yellow(
