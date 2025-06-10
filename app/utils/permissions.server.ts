@@ -1,7 +1,15 @@
 import { json } from '@remix-run/node'
 import { requireUserId } from './auth.server.ts'
-import { prisma } from './db.server.ts'
 import { type PermissionString, parsePermissionString } from './user.ts'
+import { and, inArray, eq } from 'drizzle-orm'
+import { drizzle } from './db.server.ts'
+import {
+	Permission,
+	PermissionToRole,
+	Role,
+	RoleToUser,
+	User,
+} from '../../drizzle/schema.ts'
 
 export async function requireUserWithPermission(
 	request: Request,
@@ -9,24 +17,17 @@ export async function requireUserWithPermission(
 ) {
 	const userId = await requireUserId(request)
 	const permissionData = parsePermissionString(permission)
-	const user = await prisma.user.findFirst({
-		select: { id: true },
-		where: {
-			id: userId,
-			roles: {
-				some: {
-					permissions: {
-						some: {
-							...permissionData,
-							access: permissionData.access
-								? { in: permissionData.access }
-								: undefined,
-						},
-					},
-				},
-			},
-		},
-	})
+	const permissionWhere = permissionData.access
+		? [inArray(Permission.access, permissionData.access)]
+		: []
+	const [user] = await drizzle
+		.select({ id: User.id })
+		.from(User)
+		.innerJoin(RoleToUser, eq(User.id, RoleToUser.userId))
+		.innerJoin(Role, eq(RoleToUser.roleId, Role.id))
+		.innerJoin(PermissionToRole, eq(Role.id, PermissionToRole.roleId))
+		.innerJoin(Permission, eq(PermissionToRole.permissionId, Permission.id))
+		.where(and(eq(User.id, userId), ...permissionWhere))
 	if (!user) {
 		throw json(
 			{
@@ -42,10 +43,12 @@ export async function requireUserWithPermission(
 
 export async function requireUserWithRole(request: Request, name: string) {
 	const userId = await requireUserId(request)
-	const user = await prisma.user.findFirst({
-		select: { id: true },
-		where: { id: userId, roles: { some: { name } } },
-	})
+	const [user] = await drizzle
+		.select({ id: User.id })
+		.from(User)
+		.innerJoin(RoleToUser, eq(User.id, RoleToUser.userId))
+		.innerJoin(Role, eq(RoleToUser.roleId, Role.id))
+		.where(and(eq(User.id, userId), eq(Role.name, name)))
 	if (!user) {
 		throw json(
 			{

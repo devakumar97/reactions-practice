@@ -5,7 +5,7 @@ import { MOCK_CODE_GITHUB } from '#app/utils/providers/constants'
 import {
 	createPassword,
 	createUser,
-	getNoteImages,
+	getCourseImages,
 	getUserImages,
 	img,
 } from '#tests/db-utils.ts'
@@ -17,7 +17,7 @@ async function seed() {
 
 	const totalUsers = 5
 	console.time(`👤 Created ${totalUsers} users...`)
-	const noteImages = await getNoteImages()
+	const courseImages = await getCourseImages()
 	const userImages = await getUserImages()
 
 	await prisma.role.createMany({
@@ -117,7 +117,7 @@ async function seed() {
 				password: { create: createPassword(userData.username) },
 				image: { create: userImages[index % userImages.length] },
 				roles: { connect: { name: 'user' } },
-				notes: {
+				courses: {
 					create: Array.from({
 						length: faker.number.int({ min: 1, max: 3 }),
 					}).map(() => ({
@@ -151,32 +151,32 @@ async function seed() {
 		devaUser: img({ filepath: './tests/fixtures/images/user/deva.png' }),
 		cuteKoala: img({
 			altText: 'an adorable koala cartoon illustration',
-			filepath: './tests/fixtures/images/deva-notes/cute-koala.png',
+			filepath: './tests/fixtures/images/deva-courses/cute-koala.png',
 		}),
 		koalaEating: img({
 			altText: 'a cartoon illustration of a koala in a tree eating',
-			filepath: './tests/fixtures/images/deva-notes/koala-eating.png',
+			filepath: './tests/fixtures/images/deva-courses/koala-eating.png',
 		}),
 		koalaCuddle: img({
 			altText: 'a cartoon illustration of koalas cuddling',
-			filepath: './tests/fixtures/images/deva-notes/koala-cuddle.png',
+			filepath: './tests/fixtures/images/deva-courses/koala-cuddle.png',
 		}),
 		mountain: img({
 			altText: 'a beautiful mountain covered in snow',
-			filepath: './tests/fixtures/images/deva-notes/mountain.png',
+			filepath: './tests/fixtures/images/deva-courses/mountain.png',
 		}),
 		koalaCoder: img({
 			altText: 'a koala coding at the computer',
-			filepath: './tests/fixtures/images/deva-notes/koala-coder.png',
+			filepath: './tests/fixtures/images/deva-courses/koala-coder.png',
 		}),
 		koalaMentor: img({
 			altText:
 				'a koala in a friendly and helpful posture. The Koala is standing next to and teaching a woman who is coding on a computer and shows positive signs of learning and understanding what is being explained.',
-			filepath: './tests/fixtures/images/deva-notes/koala-mentor.png',
+			filepath: './tests/fixtures/images/deva-courses/koala-mentor.png',
 		}),
 		koalaSoccer: img({
 			altText: 'a cute cartoon koala kicking a soccer ball on a soccer field ',
-			filepath: './tests/fixtures/images/deva-notes/koala-soccer.png',
+			filepath: './tests/fixtures/images/deva-courses/koala-soccer.png',
 		}),
 	})
 
@@ -194,18 +194,6 @@ async function seed() {
 				create: { providerName: 'github', providerId: githubUser.profile.id },
 			},
 			roles: { connect: [{ name: 'admin' }, { name: 'user' }] },
-			notes: {
-				create: [
-					{
-						id: 'd27a197e',
-						title: 'Basic Koala Facts',
-						content:
-							'Koalas are found in the eucalyptus forests of eastern Australia. They have grey fur with a cream-coloured chest, and strong, clawed feet, perfect for living in the branches of trees!',
-						images: { create: [devaImages.cuteKoala, devaImages.koalaEating] },
-					},
-					// (other notes here, same as before)
-				],
-			},
 			courses: {
 				create: [
 					{

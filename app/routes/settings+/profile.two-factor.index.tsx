@@ -9,10 +9,13 @@ import { Link, useFetcher, useLoaderData } from '@remix-run/react'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
 import { generateTOTP } from '#app/utils/totp.server.ts'
 import { twoFAVerificationType } from './profile.two-factor.tsx'
 import { twoFAVerifyVerificationType } from './profile.two-factor.verify.tsx'
+import { and, eq } from 'drizzle-orm'
+import { drizzle } from '#app/utils/db.server.ts'
+import { Verification } from '../../../drizzle/schema.ts'
+
 
 export const handle: SEOHandle = {
 	getSitemapEntries: () => null,
@@ -20,9 +23,11 @@ export const handle: SEOHandle = {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
-	const verification = await prisma.verification.findUnique({
-		where: { target_type: { type: twoFAVerificationType, target: userId } },
-		select: { id: true },
+	const verification = await drizzle.query.Verification.findFirst({
+		where: and(
+			eq(Verification.target, userId),
+			eq(Verification.type, twoFAVerificationType),
+		),
 	})
 	return json({ is2FAEnabled: Boolean(verification) })
 }
@@ -35,13 +40,13 @@ export async function action({ request }: ActionFunctionArgs) {
 		type: twoFAVerifyVerificationType,
 		target: userId,
 	}
-	await prisma.verification.upsert({
-		where: {
-			target_type: { target: userId, type: twoFAVerifyVerificationType },
-		},
-		create: verificationData,
-		update: verificationData,
-	})
+	await drizzle
+		.insert(Verification)
+		.values(verificationData)
+		.onConflictDoUpdate({
+			target: [Verification.target, Verification.type],
+			set: verificationData,
+		})
 	return redirect('/settings/profile/two-factor/verify')
 }
 

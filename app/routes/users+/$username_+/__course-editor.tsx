@@ -8,7 +8,7 @@ import {
 	type FieldMetadata,
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
-import { type Course, type CourseImage } from '@prisma/client'
+import { type Course, type CourseImage } from '../../../../drizzle/schema'
 import { type SerializeFrom } from '@remix-run/node'
 import { Form, useActionData } from '@remix-run/react'
 import { useState } from 'react'
@@ -25,6 +25,7 @@ import { cn, getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
 import { type action } from './__course-editor.server'
 import { useTranslation } from 'react-i18next'
 import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
+import { type InferSelectModel } from 'drizzle-orm'
 
 const titleMinLength = 1
 const titleMaxLength = 100
@@ -63,8 +64,8 @@ export function CourseEditor({
 	course,
 }: {
 	course?: SerializeFrom<
-	Pick<Course, 'id' | 'duration'> & {
-		images: Array<Pick<CourseImage, 'id' | 'altText'>>
+	Pick<InferSelectModel<typeof Course>, 'id' | 'duration'> & {
+		images: Array<Pick<InferSelectModel<typeof CourseImage>, 'id' | 'altText'>>
 		translation: {
 			languageId: string
 			title: string
