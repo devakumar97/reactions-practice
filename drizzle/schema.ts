@@ -1,268 +1,369 @@
-import { pgTable, pgEnum, uuid,text, varchar, integer, timestamp, unique, index, primaryKey } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
-import { customType } from 'drizzle-orm/pg-core';
+import { createId } from '@paralleldrive/cuid2'
+import { relations, sql } from 'drizzle-orm'
+import {
+  text,
+  integer,
+  pgTable,
+  primaryKey,
+  index,
+  uniqueIndex,
+  timestamp,
+  pgEnum,
+  } from 'drizzle-orm/pg-core'
+  import { customType } from 'drizzle-orm/pg-core';
 
-// Define custom type for binary (bytea equivalent)
-const binary = customType<{ data: string }>({
+// Custom type for bytea
+const bytea = customType<{ data: string }>({
   dataType() {
     return 'bytea';
   },
 });
 
-// Define CourseLevel enum
-const courseLevelEnum = pgEnum('course_level', ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
+// Enum for course level
+export const courseLevelEnum = pgEnum('course_level', ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
 
-export type CourseLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export const User = pgTable('User', {
+	id: text()
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	email: text().notNull().unique('User_email_key'),
+	username: text().notNull().unique('User_username_key'),
+	name: text(),
+	createdAt: timestamp({ withTimezone: true })
+		.notNull(),
+	updatedAt: timestamp({ withTimezone: true })
+		.notNull(),
+})
 
-// User table
-export const users = pgTable('user', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).unique().notNull(),
-  username: varchar('username', { length: 255 }).unique().notNull(),
-  name: varchar('name', { length: 255 }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
+export const Course = pgTable(
+	'Course',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		duration: integer('duration').notNull(),
+		createdAt: timestamp({ withTimezone: true })
+
+			.notNull(),
+		updatedAt: timestamp({ withTimezone: true })
+
+			.notNull(),
+		ownerId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+	},
+	(table) => ({
+		ownerIdUpdatedAtIdx: index('Course_ownerId_updatedAt_idx').on(
+			table.ownerId,
+			table.updatedAt,
+		),
+		ownerIdIdx: index('Course_ownerId_idx').on(table.ownerId),
+	}),
+)
+
+export const CourseImage = pgTable(
+	'CourseImage',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		altText: text(),
+		contentType: text().notNull(),
+		blob: bytea().notNull(),
+		createdAt: timestamp({ withTimezone: true })
+
+			.notNull(),
+		updatedAt: timestamp({ withTimezone: true })
+
+			.notNull(),
+		courseId: text()
+			.notNull()
+			.references(() => Course.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+	},
+	(table) => ({
+		courseIdIdx: index('CourseImage_courseId_idx').on(table.courseId),
+	}),
+)
+
+export const UserImage = pgTable('UserImage', {
+  id: text()
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  altText: text(),
+  contentType: text().notNull(),
+  blob: bytea().notNull(),
+  createdAt: timestamp({ withTimezone: true }).notNull(),
+  updatedAt: timestamp({ withTimezone: true }).notNull(),
+  userId: text()
+    .notNull()
+    .unique('UserImage_userId_key')
+    .references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+})
+
+export const Language = pgTable('Language', {
+  id: text().primaryKey(),
+  name: text().notNull(),
 });
 
-// UserImage table
-export const userImages = pgTable('user_image', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  altText: text('alt_text'),
-  contentType: varchar('content_type', { length: 255 }).notNull(),
-  blob: binary('blob').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-  userId: uuid('user_id').unique().notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-});
-
-// Course table
-export const courses = pgTable('course', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  duration: integer('duration').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-  ownerId: uuid('owner_id').notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-}, (table) => ({
-  ownerIdx: index('course_owner_id_idx').on(table.ownerId),
-  ownerUpdatedAtIdx: index('course_owner_id_updated_at_idx').on(table.ownerId, table.updatedAt),
-}));
-
-// CourseImage table
-export const courseImages = pgTable('course_image', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  altText: text('alt_text'),
-  contentType: varchar('content_type', { length: 255 }).notNull(),
-  blob: binary('blob').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-  courseId: uuid('course_id').notNull().references(() => courses.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-}, (table) => ({
-  courseIdx: index('course_image_course_id_idx').on(table.courseId),
-}));
-
-// Language table
-export const languages = pgTable('language', {
-  id: varchar('id', { length: 10 }).primaryKey(), // e.g., "en", "fr", "es"
-  name: varchar('name', { length: 255 }).notNull(),
-});
-
-// CourseTranslation table
-export const courseTranslations = pgTable('course_translation', {
-  courseId: uuid('course_id').notNull().references(() => courses.id, { onDelete: 'cascade' }),
-  languageId: varchar('language_id', { length: 10 }).notNull().references(() => languages.id, { onDelete: 'cascade' }),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description').notNull(),
-  content: text('content').notNull(),
-  level: courseLevelEnum('level').default('BEGINNER'),
+export const CourseTranslation = pgTable('CourseTranslation', {
+  courseId: text().notNull().references(() => Course.id, { onDelete: 'cascade' }),
+  languageId: text().notNull().references(() => Language.id, { onDelete: 'cascade' }),
+  title: text().notNull(),
+  description: text().notNull(),
+  content: text().notNull(),
+  level: courseLevelEnum().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.courseId, table.languageId] }),
 }));
 
-// Password table
-export const passwords = pgTable('password', {
-  hash: text('hash').notNull(),
-  userId: uuid('user_id').unique().notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-});
+export const Password = pgTable('Password', {
+	hash: text().notNull(),
+	userId: text()
+		.notNull()
+		.unique('Password_userId_key')
+		.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+})
 
-// Session table
-export const sessions = pgTable('session', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  expirationDate: timestamp('expiration_date').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-}, (table) => ({
-  userIdx: index('session_user_id_idx').on(table.userId),
-}));
+export const Session = pgTable(
+	'Session',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		expirationDate: timestamp({ withTimezone: true }).notNull(),
+		createdAt: timestamp({ withTimezone: true })
+			.notNull(),
+		updatedAt: timestamp({ withTimezone: true })
+			.notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+	},
+	(table) => ({
+		userIdIdx: index('Session_userId_idx').on(table.userId),
+	}),
+)
 
-// Permission table
-export const permissions = pgTable('permission', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  action: varchar('action', { length: 255 }).notNull(),
-  entity: varchar('entity', { length: 255 }).notNull(),
-  access: varchar('access', { length: 255 }).notNull(),
-  description: text('description').default('').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-}, (table) => ({
-  uniqueActionEntityAccess: unique('permission_action_entity_access').on(table.action, table.entity, table.access),
-}));
+export const Permission = pgTable(
+	'Permission',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		action: text().notNull(),
+		entity: text().notNull(),
+		access: text().notNull(),
+		description: text().default('').notNull(),
+		createdAt: timestamp({ withTimezone: true })
 
-// Role table
-export const roles = pgTable('role', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 255 }).unique().notNull(),
-  description: text('description').default('').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-});
+			.notNull(),
+		updatedAt: timestamp({ withTimezone: true })
 
-// Verification table
-export const verifications = pgTable('verification', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  type: varchar('type', { length: 255 }).notNull(),
-  target: varchar('target', { length: 255 }).notNull(),
-  secret: text('secret').notNull(),
-  algorithm: varchar('algorithm', { length: 255 }).notNull(),
-  digits: integer('digits').notNull(),
-  period: integer('period').notNull(),
-  charSet: varchar('char_set', { length: 255 }).notNull(),
-  expiresAt: timestamp('expires_at'),
-}, (table) => ({
-  uniqueTargetType: unique('verification_target_type').on(table.target, table.type),
-}));
+			.notNull(),
+	},
+	(table) => ({
+		actionEntityAccessKey: uniqueIndex(
+			'Permission_action_entity_access_key',
+		).on(table.action, table.entity, table.access),
+	}),
+)
 
-// Connection table
-export const connections = pgTable('connection', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  providerName: varchar('provider_name', { length: 255 }).notNull(),
-  providerId: varchar('provider_id', { length: 255 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-}, (table) => ({
-  uniqueProviderNameId: unique('connection_provider_name_id').on(table.providerName, table.providerId),
-}));
+export const Role = pgTable('Role', {
+	id: text()
+		.primaryKey()
+		.$defaultFn(() => createId()),
+	name: text().notNull().unique('Role_name_key'),
+	description: text().default('').notNull(),
+	createdAt: timestamp({ withTimezone: true })
+		.notNull(),
+	updatedAt: timestamp({ withTimezone: true })
+		.notNull(),
+})
 
-// Many-to-many relationship table for User and Role
-export const userToRole = pgTable('user_to_role', {
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-  roleId: uuid('role_id').notNull().references(() => roles.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.userId, table.roleId] }),
-}));
+export const Verification = pgTable(
+	'Verification',
+	{
+		id: text('id')
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		createdAt: timestamp({ withTimezone: true })
 
-// Many-to-many relationship table for Role and Permission
-export const roleToPermission = pgTable('role_to_permission', {
-  roleId: uuid('role_id').notNull().references(() => roles.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-  permissionId: uuid('permission_id').notNull().references(() => permissions.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.roleId, table.permissionId] }),
-}));
+			.notNull(),
+		type: text().notNull(),
+		target: text().notNull(),
+		secret: text().notNull(),
+		algorithm: text().notNull(),
+		digits: integer().notNull(),
+		period: integer().notNull(),
+		charSet: text().notNull(),
+		expiresAt: timestamp({ withTimezone: true }),
+	},
+	(table) => ({
+		targetTypeKey: uniqueIndex('Verification_target_type_key').on(
+			table.target,
+			table.type,
+		),
+	}),
+)
+
+export const Connection = pgTable(
+	'Connection',
+	{
+		id: text()
+			.primaryKey()
+			.$defaultFn(() => createId()),
+		providerName: text().notNull(),
+		providerId: text().notNull(),
+		createdAt: timestamp({ withTimezone: true })
+
+			.notNull(),
+		updatedAt: timestamp({ withTimezone: true })
+
+			.notNull(),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+	},
+	(table) => ({
+		providerNameProviderIdKey: uniqueIndex(
+			'Connection_providerName_providerId_key',
+		).on(table.providerName, table.providerId),
+	}),
+)
+
+export const PermissionToRole = pgTable(
+	'_PermissionToRole',
+	{
+		permissionId: text()
+			.notNull()
+			.references(() => Permission.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		roleId: text()
+			.notNull()
+			.references(() => Role.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+	},
+	(table) => ({
+		roleIdIdx: index('PermissionToRole_roleId_idx').on(table.roleId),
+		pk: primaryKey({ columns: [table.permissionId, table.roleId] }),
+	}),
+)
+
+export const RoleToUser = pgTable(
+	'_RoleToUser',
+	{
+		roleId: text()
+			.notNull()
+			.references(() => Role.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		userId: text()
+			.notNull()
+			.references(() => User.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+	},
+	(table) => ({
+		userIdIdx: index('RoleToUser_userId_idx').on(table.userId),
+		pk: primaryKey({ columns: [table.userId, table.roleId] }),
+	}),
+)
 
 // Relations
-export const userRelations = relations(users, ({ one, many }) => ({
-  image: one(userImages, {
-    fields: [users.id],
-    references: [userImages.userId],
-  }),
-  password: one(passwords, {
-    fields: [users.id],
-    references: [passwords.userId],
-  }),
-  roles: many(userToRole),
-  sessions: many(sessions),
-  connections: many(connections),
-  courses: many(courses),
-}));
+export const courseRelations = relations(Course, ({ one, many }) => ({
+	owner: one(User, {
+		fields: [Course.ownerId],
+		references: [User.id],
+	}),
+	images: many(CourseImage),
+}))
 
-export const userImageRelations = relations(userImages, ({ one }) => ({
-  user: one(users, {
-    fields: [userImages.userId],
-    references: [users.id],
-  }),
-}));
- 
-export const courseRelations = relations(courses, ({ one, many }) => ({
-  owner: one(users, {
-    fields: [courses.ownerId],
-    references: [users.id],
-  }),
-  images: many(courseImages),
-  translations: many(courseTranslations),
-}));
+export const userRelations = relations(User, ({ one, many }) => ({
+	courses: many(Course),
+	image: one(UserImage),
+	password: one(Password),
+	sessions: many(Session),
+	connections: many(Connection),
+	roles: many(RoleToUser),
+}))
 
-export const courseImageRelations = relations(courseImages, ({ one }) => ({
-  course: one(courses, {
-    fields: [courseImages.courseId],
-    references: [courses.id],
-  }),
-}));
+export const courseImageRelations = relations(CourseImage, ({ one }) => ({
+	course: one(Course, {
+		fields: [CourseImage.courseId],
+		references: [Course.id],
+	}),
+}))
 
-export const courseTranslationRelations = relations(courseTranslations, ({ one }) => ({
-  course: one(courses, {
-    fields: [courseTranslations.courseId],
-    references: [courses.id],
-  }),
-  language: one(languages, {
-    fields: [courseTranslations.languageId],
-    references: [languages.id],
-  }),
-}));
+export const userImageRelations = relations(UserImage, ({ one }) => ({
+	user: one(User, {
+		fields: [UserImage.userId],
+		references: [User.id],
+	}),
+}))
 
-export const languageRelations = relations(languages, ({ many }) => ({
-  translations: many(courseTranslations),
-}));
+export const passwordRelations = relations(Password, ({ one }) => ({
+	user: one(User, {
+		fields: [Password.userId],
+		references: [User.id],
+	}),
+}))
 
-export const passwordRelations = relations(passwords, ({ one }) => ({
-  user: one(users, {
-    fields: [passwords.userId],
-    references: [users.id],
-  }),
-}));
+export const sessionRelations = relations(Session, ({ one }) => ({
+	user: one(User, {
+		fields: [Session.userId],
+		references: [User.id],
+	}),
+}))
 
-export const sessionRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
-  }),
-}));
+export const connectionRelations = relations(Connection, ({ one }) => ({
+	user: one(User, {
+		fields: [Connection.userId],
+		references: [User.id],
+	}),
+}))
 
-export const permissionRelations = relations(permissions, ({ many }) => ({
-  roles: many(roleToPermission),
-}));
+export const permissionToRoleRelations = relations(
+	PermissionToRole,
+	({ one }) => ({
+		role: one(Role, {
+			fields: [PermissionToRole.roleId],
+			references: [Role.id],
+		}),
+		permission: one(Permission, {
+			fields: [PermissionToRole.permissionId],
+			references: [Permission.id],
+		}),
+	}),
+)
 
-export const roleRelations = relations(roles, ({ many }) => ({
-  users: many(userToRole),
-  permissions: many(roleToPermission),
-}));
+export const roleRelations = relations(Role, ({ many }) => ({
+	permissionToRoles: many(PermissionToRole),
+	roleToUsers: many(RoleToUser),
+}))
 
-export const userToRoleRelations = relations(userToRole, ({ one }) => ({
-  user: one(users, {
-    fields: [userToRole.userId],
-    references: [users.id],
-  }),
-  role: one(roles, {
-    fields: [userToRole.roleId],
-    references: [roles.id],
-  }),
-}));
+export const permissionRelations = relations(Permission, ({ many }) => ({
+	permissionToRoles: many(PermissionToRole),
+}))
 
-export const roleToPermissionRelations = relations(roleToPermission, ({ one }) => ({
-  role: one(roles, {
-    fields: [roleToPermission.roleId],
-    references: [roles.id],
-  }),
-  permission: one(permissions, {
-    fields: [roleToPermission.permissionId],
-    references: [permissions.id],
-  }),
-}));
+export const roleToUserRelations = relations(RoleToUser, ({ one }) => ({
+	user: one(User, {
+		fields: [RoleToUser.userId],
+		references: [User.id],
+	}),
+	role: one(Role, {
+		fields: [RoleToUser.roleId],
+		references: [Role.id],
+	}),
+}))
 
-export const connectionRelations = relations(connections, ({ one }) => ({
-  user: one(users, {
-    fields: [connections.userId],
-    references: [users.id],
+export const courseTranslationRelations = relations(CourseTranslation, ({ one }) => ({
+  course: one(Course, {
+    fields: [CourseTranslation.courseId],
+    references: [Course.id],
   }),
-}));
+  language: one(Language, {
+    fields: [CourseTranslation.languageId],
+    references: [Language.id],
+  }),
+}))
+
+export const languageRelations = relations(Language, ({ many }) => ({
+  translations: many(CourseTranslation),
+}))

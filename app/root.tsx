@@ -35,7 +35,7 @@ import {
 import tailwindStyleSheetUrl from './styles/tailwind.css?url'
 import { getUserId, logout } from './utils/auth.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { drizzle } from './utils/db.server.ts'
+import { db } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { honeypot } from './utils/honeypot.server.ts'
 import { combineHeaders, getDomainUrl } from './utils/misc.tsx'
@@ -52,7 +52,7 @@ import { LanguageDropDown } from './components/language-dropdown.tsx'
 import { io, type Socket } from 'socket.io-client'
 import { SocketProvider } from '#app/utils/context'
 import { eq } from 'drizzle-orm'
-import {user} from '../drizzle/schema.ts'
+import {users, roles} from '../drizzle/schema.ts'
 
 export const links: LinksFunction = () => {
 	return [
@@ -89,29 +89,58 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		desc: 'getUserId in root',
 	})
 	const locale = await getLanguage(request)
-	const user = userId
-		? await time(
-				() =>
-					prisma.user.findUniqueOrThrow({
-						select: {
-							id: true,
-							name: true,
-							username: true,
-							image: { select: { id: true } },
-							roles: {
-								select: {
-									name: true,
-									permissions: {
-										select: { entity: true, action: true, access: true },
+	let user = null
+	if (userId) {
+		const queryResult = await time(
+			() =>
+				db.query.users.findFirst({
+					columns: {
+						id: true,
+						name: true,
+						username: true,
+					},
+					with: {
+						image: { columns: { id: true } },
+						roles: {
+							with: {
+								role: {
+									columns: { name: true },
+									with: {
+										roleToPermissionRelations: {
+											with: {
+												permission: {
+													columns: {
+														entity: true,
+														action: true,
+														access: true,
+													},
+												},
+											},
+										},
 									},
 								},
 							},
 						},
-						where: { id: userId },
-					}),
-				{ timings, type: 'find user', desc: 'find user in root' },
-			)
-		: null
+					},
+					where: eq(users.id, userId),
+				}),
+			{ timings, type: 'find user', desc: 'find user in root' },
+		)
+		if (queryResult) {
+			user = {
+				id: queryResult?.id,
+				name: queryResult?.name,
+				username: queryResult?.username,
+				image: queryResult?.userImages,
+				roles: queryResult?.roles.map((roleToUser) => ({
+					name: roleToUser.role.name,
+					permissions: roleToUser.role.permissionToRoles.map(
+						(permissionToRole) => permissionToRole.permission,
+					),
+				})),
+			}
+		}
+	}
 	if (userId && !user) {
 		console.info('something weird happened')
 		// something weird happened... The user is authenticated but we can't find

@@ -4,13 +4,13 @@ import { Authenticator } from 'remix-auth'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { connectionSessionStorage, providers } from './connections.server.ts'
 import {
-	connections,
-	passwords,
-	roles,
-	userToRole,
-	sessions,
-	users,
-	userImages,
+	Connection,
+	Password,
+	Role,
+	RoleToUser,
+	Session,
+	User,
+	UserImage,
 } from '../../drizzle/schema'
 import { combineHeaders, downloadFile } from './misc.tsx'
 import { type ProviderUser } from './providers/provider.ts'
@@ -38,11 +38,11 @@ export async function getUserId(request: Request) {
 	)
 	const sessionId = authSession.get(sessionKey)
 	if (!sessionId) return null
-	const session = await db.query.sessions.findFirst({
+	const session = await db.query.Session.findFirst({
 		with: { user: { columns: { id: true } } },
 		where: and(
-			eq(sessions.id, sessionId),
-			gt(sessions.expirationDate, new Date()),
+			eq(Session.id, sessionId),
+			gt(Session.expirationDate, new Date()),
 		),
 	})
 	if (!session?.userId) {
@@ -86,21 +86,21 @@ export async function login({
 	username,
 	password,
 }: {
-	username: InferSelectModel<typeof users>['username']
+	username: InferSelectModel<typeof User>['username']
 	password: string
 }) {
 	const user = await verifyUserPassword({ username }, password)
 	if (!user) return null
 	const [session] = await db
-		.insert(sessions)
+		.insert(Session)
 		.values({
 			expirationDate: getSessionExpirationDate(),
 			userId: user.id,
 		})
 		.returning({
-			id: sessions.id,
-			expirationDate: sessions.expirationDate,
-			userId: sessions.userId,
+			id: Session.id,
+			expirationDate: Session.expirationDate,
+			userId: Session.userId,
 		})
 	return session
 }
@@ -109,15 +109,15 @@ export async function resetUserPassword({
 	username,
 	password,
 }: {
-	username: InferSelectModel<typeof users>['username']
+	username: InferSelectModel<typeof User>['username']
 	password: string
 }) {
 	const hashedPassword = await getPasswordHash(password)
 	return db
-		.update(passwords)
+		.update(Password)
 		.set({ hash: hashedPassword })
-		.from(users)
-		.where(and(eq(users.username, username), eq(users.id, passwords.userId)))}
+		.from(User)
+		.where(and(eq(User.username, username), eq(User.id, passwords.userId)))}
 
 export async function signup({
 	email,
@@ -125,15 +125,15 @@ export async function signup({
 	password,
 	name,
 }: {
-	email: InferSelectModel<typeof users>['email']
-	username: InferSelectModel<typeof users>['username']
-	name: InferSelectModel<typeof users>['name']
+	email: InferSelectModel<typeof User>['email']
+	username: InferSelectModel<typeof User>['username']
+	name: InferSelectModel<typeof User>['name']
 	password: string
 }) {
 	return await db.transaction(async (tx) => {
     // 1. Create the User
     const user = await tx
-      .insert(users)
+      .insert(User)
       .values({
         email: email.toLowerCase(),
         username: username.toLowerCase(),
@@ -152,16 +152,16 @@ export async function signup({
     await tx.insert(userToRole).select(
       tx
         .select({
-          roleId: roles.id,
+          roleId: Role.id,
           userId: sql`${user.id}`.as('userId'), // Inline raw SQL injection of ID
         })
-        .from(roles)
-        .where(eq(roles.name, 'user'))
+        .from(Role)
+        .where(eq(Role.name, 'user'))
     );
 
     // 4. Create a session
     const session = await tx
-      .insert(sessions)
+      .insert(Session)
       .values({
         expirationDate: getSessionExpirationDate(),
         userId: user.id,
@@ -181,16 +181,16 @@ export async function signupWithConnection({
 	providerName,
 	imageUrl,
 }: {
-	email: InferSelectModel<typeof users>['email']
-	username: InferSelectModel<typeof users>['username']
-	name: InferSelectModel<typeof users>['name']
-	providerId: InferSelectModel<typeof connections>['providerId']
-	providerName: InferSelectModel<typeof connections>['providerName']
+	email: InferSelectModel<typeof User>['email']
+	username: InferSelectModel<typeof User>['username']
+	name: InferSelectModel<typeof User>['name']
+	providerId: InferSelectModel<typeof Connection>['providerId']
+	providerName: InferSelectModel<typeof Connection>['providerName']
 	imageUrl?: string
 }) {
 	return await db.transaction(async (tx) => {
 		const user = await tx
-			.insert(users)
+			.insert(User)
 			.values({
 				email: email.toLowerCase(),
 				username: username.toLowerCase(),
@@ -199,31 +199,31 @@ export async function signupWithConnection({
 			.returning()
 			.then(first)
 
-		await tx.insert(userToRole).select(
+		await tx.insert(RoleToUser).select(
 			tx
 				.select({
-					roleId: roles.id,
+					roleId: Role.id,
 					userId: sql`${user.id}`.as('userId'),
 				})
-				.from(roles)
-				.where(eq(roles.name, 'user')),
+				.from(Role)
+				.where(eq(Role.name, 'user')),
 		)
 
-		await tx.insert(connections).values({
+		await tx.insert(Connection).values({
 			providerId,
 			providerName,
 			userId: user.id,
 		})
 
 		if (imageUrl) {
-			await tx.insert(userImages).values({
+			await tx.insert(UserImage).values({
 				...(await downloadFile(imageUrl)),
 				userId: user.id,
 			})
 		}
 
 		const session = await tx
-			.insert(sessions)
+			.insert(Session)
 			.values({
 				expirationDate: getSessionExpirationDate(),
 				userId: user.id,
@@ -282,7 +282,7 @@ export async function verifyUserPassword(
 	const userWithPassword = await db.query.users.findFirst({
 		where:
 			'username' in where
-				? eq(users.username, where.username)
+				? eq(users.username, where.username.toLowerCase())
 				: eq(users.id, where.id),
 		with: { password: { columns: { hash: true } } },
 	})

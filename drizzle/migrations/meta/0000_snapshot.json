@@ -1,158 +1,80 @@
 {
-  "id": "7b2e844b-fa64-45c2-be97-7b751749e079",
+  "id": "71b50c2e-5044-4bec-839f-faacb9fbee41",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.connection": {
-      "name": "connection",
+    "public.Connection": {
+      "name": "Connection",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "provider_name": {
-          "name": "provider_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
           "notNull": true
         },
-        "provider_id": {
-          "name": "provider_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "connection_user_id_user_id_fk": {
-          "name": "connection_user_id_user_id_fk",
-          "tableFrom": "connection",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "connection_provider_name_id": {
-          "name": "connection_provider_name_id",
-          "nullsNotDistinct": false,
-          "columns": [
-            "provider_name",
-            "provider_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.course_image": {
-      "name": "course_image",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "alt_text": {
-          "name": "alt_text",
+        "providerName": {
+          "name": "providerName",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "content_type": {
-          "name": "content_type",
-          "type": "varchar(255)",
+        "providerId": {
+          "name": "providerId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "blob": {
-          "name": "blob",
-          "type": "bytea",
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "course_id": {
-          "name": "course_id",
-          "type": "uuid",
+        "userId": {
+          "name": "userId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {
-        "course_image_course_id_idx": {
-          "name": "course_image_course_id_idx",
+        "Connection_providerName_providerId_key": {
+          "name": "Connection_providerName_providerId_key",
           "columns": [
             {
-              "expression": "course_id",
+              "expression": "providerName",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "providerId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "course_image_course_id_course_id_fk": {
-          "name": "course_image_course_id_course_id_fk",
-          "tableFrom": "course_image",
-          "tableTo": "course",
+        "Connection_userId_User_id_fk": {
+          "name": "Connection_userId_User_id_fk",
+          "tableFrom": "Connection",
+          "tableTo": "User",
           "columnsFrom": [
-            "course_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -167,25 +89,204 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.course_translation": {
-      "name": "course_translation",
+    "public.Course": {
+      "name": "Course",
       "schema": "",
       "columns": {
-        "course_id": {
-          "name": "course_id",
-          "type": "uuid",
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "language_id": {
-          "name": "language_id",
-          "type": "varchar(10)",
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ownerId": {
+          "name": "ownerId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Course_ownerId_updatedAt_idx": {
+          "name": "Course_ownerId_updatedAt_idx",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updatedAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Course_ownerId_idx": {
+          "name": "Course_ownerId_idx",
+          "columns": [
+            {
+              "expression": "ownerId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Course_ownerId_User_id_fk": {
+          "name": "Course_ownerId_User_id_fk",
+          "tableFrom": "Course",
+          "tableTo": "User",
+          "columnsFrom": [
+            "ownerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.CourseImage": {
+      "name": "CourseImage",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "altText": {
+          "name": "altText",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contentType": {
+          "name": "contentType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blob": {
+          "name": "blob",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "courseId": {
+          "name": "courseId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "CourseImage_courseId_idx": {
+          "name": "CourseImage_courseId_idx",
+          "columns": [
+            {
+              "expression": "courseId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "CourseImage_courseId_Course_id_fk": {
+          "name": "CourseImage_courseId_Course_id_fk",
+          "tableFrom": "CourseImage",
+          "tableTo": "Course",
+          "columnsFrom": [
+            "courseId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.CourseTranslation": {
+      "name": "CourseTranslation",
+      "schema": "",
+      "columns": {
+        "courseId": {
+          "name": "courseId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "languageId": {
+          "name": "languageId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "title": {
           "name": "title",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -206,18 +307,17 @@
           "type": "course_level",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false,
-          "default": "'BEGINNER'"
+          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "course_translation_course_id_course_id_fk": {
-          "name": "course_translation_course_id_course_id_fk",
-          "tableFrom": "course_translation",
-          "tableTo": "course",
+        "CourseTranslation_courseId_Course_id_fk": {
+          "name": "CourseTranslation_courseId_Course_id_fk",
+          "tableFrom": "CourseTranslation",
+          "tableTo": "Course",
           "columnsFrom": [
-            "course_id"
+            "courseId"
           ],
           "columnsTo": [
             "id"
@@ -225,12 +325,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "course_translation_language_id_language_id_fk": {
-          "name": "course_translation_language_id_language_id_fk",
-          "tableFrom": "course_translation",
-          "tableTo": "language",
+        "CourseTranslation_languageId_Language_id_fk": {
+          "name": "CourseTranslation_languageId_Language_id_fk",
+          "tableFrom": "CourseTranslation",
+          "tableTo": "Language",
           "columnsFrom": [
-            "language_id"
+            "languageId"
           ],
           "columnsTo": [
             "id"
@@ -240,11 +340,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "course_translation_course_id_language_id_pk": {
-          "name": "course_translation_course_id_language_id_pk",
+        "CourseTranslation_courseId_languageId_pk": {
+          "name": "CourseTranslation_courseId_languageId_pk",
           "columns": [
-            "course_id",
-            "language_id"
+            "courseId",
+            "languageId"
           ]
         }
       },
@@ -253,116 +353,19 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.course": {
-      "name": "course",
+    "public.Language": {
+      "name": "Language",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "duration": {
-          "name": "duration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "course_owner_id_idx": {
-          "name": "course_owner_id_idx",
-          "columns": [
-            {
-              "expression": "owner_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "course_owner_id_updated_at_idx": {
-          "name": "course_owner_id_updated_at_idx",
-          "columns": [
-            {
-              "expression": "owner_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "updated_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "course_owner_id_user_id_fk": {
-          "name": "course_owner_id_user_id_fk",
-          "tableFrom": "course",
-          "tableTo": "user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.language": {
-      "name": "language",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(10)",
+          "type": "text",
           "primaryKey": true,
           "notNull": true
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
@@ -375,8 +378,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.password": {
-      "name": "password",
+    "public.Password": {
+      "name": "Password",
       "schema": "",
       "columns": {
         "hash": {
@@ -385,21 +388,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
+        "userId": {
+          "name": "userId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "password_user_id_user_id_fk": {
-          "name": "password_user_id_user_id_fk",
-          "tableFrom": "password",
-          "tableTo": "user",
+        "Password_userId_User_id_fk": {
+          "name": "Password_userId_User_id_fk",
+          "tableFrom": "Password",
+          "tableTo": "User",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -410,11 +413,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "password_user_id_unique": {
-          "name": "password_user_id_unique",
+        "Password_userId_key": {
+          "name": "Password_userId_key",
           "nullsNotDistinct": false,
           "columns": [
-            "user_id"
+            "userId"
           ]
         }
       },
@@ -422,32 +425,31 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.permission": {
-      "name": "permission",
+    "public.Permission": {
+      "name": "Permission",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "action": {
           "name": "action",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "entity": {
           "name": "entity",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "access": {
           "name": "access",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -458,64 +460,96 @@
           "notNull": true,
           "default": "''"
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "Permission_action_entity_access_key": {
+          "name": "Permission_action_entity_access_key",
+          "columns": [
+            {
+              "expression": "action",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entity",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "access",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "permission_action_entity_access": {
-          "name": "permission_action_entity_access",
-          "nullsNotDistinct": false,
-          "columns": [
-            "action",
-            "entity",
-            "access"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.role_to_permission": {
-      "name": "role_to_permission",
+    "public._PermissionToRole": {
+      "name": "_PermissionToRole",
       "schema": "",
       "columns": {
-        "role_id": {
-          "name": "role_id",
-          "type": "uuid",
+        "permissionId": {
+          "name": "permissionId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "permission_id": {
-          "name": "permission_id",
-          "type": "uuid",
+        "roleId": {
+          "name": "roleId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "PermissionToRole_roleId_idx": {
+          "name": "PermissionToRole_roleId_idx",
+          "columns": [
+            {
+              "expression": "roleId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "role_to_permission_role_id_role_id_fk": {
-          "name": "role_to_permission_role_id_role_id_fk",
-          "tableFrom": "role_to_permission",
-          "tableTo": "role",
+        "_PermissionToRole_permissionId_Permission_id_fk": {
+          "name": "_PermissionToRole_permissionId_Permission_id_fk",
+          "tableFrom": "_PermissionToRole",
+          "tableTo": "Permission",
           "columnsFrom": [
-            "role_id"
+            "permissionId"
           ],
           "columnsTo": [
             "id"
@@ -523,12 +557,12 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "role_to_permission_permission_id_permission_id_fk": {
-          "name": "role_to_permission_permission_id_permission_id_fk",
-          "tableFrom": "role_to_permission",
-          "tableTo": "permission",
+        "_PermissionToRole_roleId_Role_id_fk": {
+          "name": "_PermissionToRole_roleId_Role_id_fk",
+          "tableFrom": "_PermissionToRole",
+          "tableTo": "Role",
           "columnsFrom": [
-            "permission_id"
+            "roleId"
           ],
           "columnsTo": [
             "id"
@@ -538,11 +572,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "role_to_permission_role_id_permission_id_pk": {
-          "name": "role_to_permission_role_id_permission_id_pk",
+        "_PermissionToRole_permissionId_roleId_pk": {
+          "name": "_PermissionToRole_permissionId_roleId_pk",
           "columns": [
-            "role_id",
-            "permission_id"
+            "permissionId",
+            "roleId"
           ]
         }
       },
@@ -551,20 +585,19 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.role": {
-      "name": "role",
+    "public.Role": {
+      "name": "Role",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -575,27 +608,25 @@
           "notNull": true,
           "default": "''"
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "role_name_unique": {
-          "name": "role_name_unique",
+        "Role_name_key": {
+          "name": "Role_name_key",
           "nullsNotDistinct": false,
           "columns": [
             "name"
@@ -606,50 +637,29 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.session": {
-      "name": "session",
+    "public._RoleToUser": {
+      "name": "_RoleToUser",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "expiration_date": {
-          "name": "expiration_date",
-          "type": "timestamp",
+        "roleId": {
+          "name": "roleId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
+        "userId": {
+          "name": "userId",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {
-        "session_user_id_idx": {
-          "name": "session_user_id_idx",
+        "RoleToUser_userId_idx": {
+          "name": "RoleToUser_userId_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -662,131 +672,12 @@
         }
       },
       "foreignKeys": {
-        "session_user_id_user_id_fk": {
-          "name": "session_user_id_user_id_fk",
-          "tableFrom": "session",
-          "tableTo": "user",
+        "_RoleToUser_roleId_Role_id_fk": {
+          "name": "_RoleToUser_roleId_Role_id_fk",
+          "tableFrom": "_RoleToUser",
+          "tableTo": "Role",
           "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user_image": {
-      "name": "user_image",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "alt_text": {
-          "name": "alt_text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "content_type": {
-          "name": "content_type",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "blob": {
-          "name": "blob",
-          "type": "bytea",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "user_image_user_id_user_id_fk": {
-          "name": "user_image_user_id_user_id_fk",
-          "tableFrom": "user_image",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_image_user_id_unique": {
-          "name": "user_image_user_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.user_to_role": {
-      "name": "user_to_role",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "role_id": {
-          "name": "role_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "user_to_role_user_id_user_id_fk": {
-          "name": "user_to_role_user_id_user_id_fk",
-          "tableFrom": "user_to_role",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
+            "roleId"
           ],
           "columnsTo": [
             "id"
@@ -794,12 +685,12 @@
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
-        "user_to_role_role_id_role_id_fk": {
-          "name": "user_to_role_role_id_role_id_fk",
-          "tableFrom": "user_to_role",
-          "tableTo": "role",
+        "_RoleToUser_userId_User_id_fk": {
+          "name": "_RoleToUser_userId_User_id_fk",
+          "tableFrom": "_RoleToUser",
+          "tableTo": "User",
           "columnsFrom": [
-            "role_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -809,11 +700,11 @@
         }
       },
       "compositePrimaryKeys": {
-        "user_to_role_user_id_role_id_pk": {
-          "name": "user_to_role_user_id_role_id_pk",
+        "_RoleToUser_userId_roleId_pk": {
+          "name": "_RoleToUser_userId_roleId_pk",
           "columns": [
-            "user_id",
-            "role_id"
+            "userId",
+            "roleId"
           ]
         }
       },
@@ -822,63 +713,133 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user": {
-      "name": "user",
+    "public.Session": {
+      "name": "Session",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
+        },
+        "expirationDate": {
+          "name": "expirationDate",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Session_userId_idx": {
+          "name": "Session_userId_idx",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Session_userId_User_id_fk": {
+          "name": "Session_userId_User_id_fk",
+          "tableFrom": "Session",
+          "tableTo": "User",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.User": {
+      "name": "User",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
         },
         "email": {
           "name": "email",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "username": {
           "name": "username",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "user_email_unique": {
-          "name": "user_email_unique",
+        "User_email_key": {
+          "name": "User_email_key",
           "nullsNotDistinct": false,
           "columns": [
             "email"
           ]
         },
-        "user_username_unique": {
-          "name": "user_username_unique",
+        "User_username_key": {
+          "name": "User_username_key",
           "nullsNotDistinct": false,
           "columns": [
             "username"
@@ -889,33 +850,108 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.verification": {
-      "name": "verification",
+    "public.UserImage": {
+      "name": "UserImage",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "altText": {
+          "name": "altText",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
+        },
+        "contentType": {
+          "name": "contentType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blob": {
+          "name": "blob",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "UserImage_userId_User_id_fk": {
+          "name": "UserImage_userId_User_id_fk",
+          "tableFrom": "UserImage",
+          "tableTo": "User",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "UserImage_userId_key": {
+          "name": "UserImage_userId_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "userId"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Verification": {
+      "name": "Verification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
         },
         "type": {
           "name": "type",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
         "target": {
           "name": "target",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -927,7 +963,7 @@
         },
         "algorithm": {
           "name": "algorithm",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -943,38 +979,61 @@
           "primaryKey": false,
           "notNull": true
         },
-        "char_set": {
-          "name": "char_set",
-          "type": "varchar(255)",
+        "charSet": {
+          "name": "charSet",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "verification_target_type": {
-          "name": "verification_target_type",
-          "nullsNotDistinct": false,
+      "indexes": {
+        "Verification_target_type_key": {
+          "name": "Verification_target_type_key",
           "columns": [
-            "target",
-            "type"
-          ]
+            {
+              "expression": "target",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     }
   },
-  "enums": {},
+  "enums": {
+    "public.course_level": {
+      "name": "course_level",
+      "schema": "public",
+      "values": [
+        "BEGINNER",
+        "INTERMEDIATE",
+        "ADVANCED"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "roles": {},
