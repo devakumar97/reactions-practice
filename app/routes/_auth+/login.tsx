@@ -207,7 +207,7 @@ export default function LoginPage() {
 }
 
 export const meta: MetaFunction = () => {
-	return [{ title: 'Login to Epic Notes' }]
+	return [{ title: 'Login to D courses' }]
 }
 
 export function ErrorBoundary() {

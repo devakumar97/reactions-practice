@@ -142,23 +142,7 @@ console.log('data.course.ownerId', data.course.ownerId)
 
 	const displayBar = canDelete || isOwner
 	const basePath = 'courseEditor.form'
-
-
-	// const sectionRef = useRef<HTMLElement>(null)
-
-	// useEffect(() => {
-	// 	if (sectionRef.current) {
-	// 		sectionRef.current.focus()
-	// 	}
-	// }, [data.course.id])
-	// console.log(data.course.images);
 	return (
-		// <section
-		// 	ref={sectionRef}
-		// 	className="absolute inset-0 flex flex-col px-10"
-		// 	aria-labelledby="course-title"
-		// 	tabIndex={-1}
-		// >
 			<div className="flex flex-col space-y-6 px-4 py-6 text-foreground bg-background max-h-[80vh] overflow-y-auto rounded-lg">
 
 			<h2 id="course-title" className="mb-2 pt-12 text-h2 lg:mb-6">
@@ -233,7 +217,6 @@ console.log('data.course.ownerId', data.course.ownerId)
 				</div>
 			)}
 			</div>
-		// </section>
 	)
 }
 
