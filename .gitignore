@@ -7,7 +7,7 @@ node_modules
 .cache
 
 /prisma/data.db
-/prisma/data.db-journal
+/drizzle/data.db*
 /tests/prisma
 
 /test-results/

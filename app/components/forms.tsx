@@ -88,7 +88,7 @@ export function DropdownField({
 			{/* Dropdown (Select) */}
 			<select
 				id={id}
-				aria-invalid={errorId ? "true" : undefined}
+				{...(errorId ? { 'aria-invalid': 'true' } : {})}
 				aria-describedby={errorId}
 				{...selectProps}
 				className={cn(

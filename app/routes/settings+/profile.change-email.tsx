@@ -17,13 +17,15 @@ import {
 	requireRecentVerification,
 } from '#app/routes/_auth+/verify.server.ts'
 import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
+import { drizzle } from '#app/utils/db.server.ts'
 import { sendEmail } from '#app/utils/email.server.ts'
 import { useIsPending } from '#app/utils/misc.tsx'
 import { EmailSchema } from '#app/utils/user-validation.ts'
 import { verifySessionStorage } from '#app/utils/verification.server.ts'
 import { EmailChangeEmail } from './profile.change-email.server.tsx'
 import { type BreadcrumbHandle } from './profile.tsx'
+import { eq } from 'drizzle-orm'
+import { User } from '../../../drizzle/schema.ts'
 
 export const handle: BreadcrumbHandle & SEOHandle = {
 	breadcrumb: <Icon name="envelope-closed">Change Email</Icon>,
@@ -39,9 +41,9 @@ const ChangeEmailSchema = z.object({
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireRecentVerification(request)
 	const userId = await requireUserId(request)
-	const user = await prisma.user.findUnique({
-		where: { id: userId },
-		select: { email: true },
+	const user = await drizzle.query.User.findFirst({
+		where: eq(User.id, userId),
+		columns: { email: true },
 	})
 	if (!user) {
 		const params = new URLSearchParams({ redirectTo: request.url })
@@ -55,8 +57,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
 	const submission = await parseWithZod(formData, {
 		schema: ChangeEmailSchema.superRefine(async (data, ctx) => {
-			const existingUser = await prisma.user.findUnique({
-				where: { email: data.email },
+			const existingUser = await drizzle.query.User.findFirst({
+				where: eq(User.email, data.email),
 			})
 			if (existingUser) {
 				ctx.addIssue({
@@ -84,7 +86,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const response = await sendEmail({
 		to: submission.value.email,
-		subject: `Epic Notes Email Change Verification`,
+		subject: `Email Change Verification`,
 		react: <EmailChangeEmail verifyUrl={verifyUrl.toString()} otp={otp} />,
 	})
 

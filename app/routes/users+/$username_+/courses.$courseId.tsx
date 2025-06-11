@@ -21,7 +21,7 @@ import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
-import { prisma } from '#app/utils/db.server.ts'
+import { drizzle } from '#app/utils/db.server.ts'
 import { getCourseImgSrc, useIsPending } from '#app/utils/misc.tsx'
 import { requireUserWithPermission } from '#app/utils/permissions.server.ts'
 import { redirectWithToast } from '#app/utils/toast.server.ts'
@@ -30,46 +30,54 @@ import { type loader as courseLoader } from './courses'
 import { getLanguage } from '#app/utils/language-server.ts'
 import { useTranslation } from 'react-i18next'
 import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
+import { eq } from 'drizzle-orm'
+import { Course, CourseTranslation } from '../../../../drizzle/schema.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const lang = await getLanguage(request)
 
-	const course = await prisma.course.findUnique({
-		where: { id: params.courseId },
-		select: {
-			id: true,
-			duration: true,
-			ownerId: true,
-			updatedAt: true,
-			images: {
-				select: {
-					id: true,
-					altText: true,
-				},
-			},
-			translation: {
-				where: {
-					languageId: lang,
-				  },
-				select: {
-					title: true,
-					description: true,
-					content: true,
-					level: true,
-					language: {
-						select: { id: true },
-					},
-				},
-			},
-		},
-	})
+	if (!params.courseId) {
+		throw new Response('CourseId is required', { status: 400 })
+	}
+
+	const course = await drizzle.query.Course.findFirst({
+ 	 where: eq(Course.id, params.courseId),
+  	columns: {
+    id: true,
+    duration: true,
+    ownerId: true,
+    updatedAt: true,
+  		},
+  	with: {
+    images: {
+      columns: {
+        id: true,
+        altText: true,
+      },
+    },
+    translations: {
+      where: eq(CourseTranslation.languageId, lang),
+      columns: {
+        title: true,
+        description: true,
+        content: true,
+        level: true,
+      },
+      with: {
+        language: {
+          columns: { id: true },
+        },
+      },
+    },
+  },
+})
 
 	invariantResponse(course, 'Course not found', { status: 404 })
 
 	const date = new Date(course.updatedAt)
 	const timeAgo = formatDistanceToNow(date)
 
-	const translation = course.translation[0]
+	const translation = course.translations[0]
 
 	return json({
 		course: {
@@ -104,9 +112,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const { courseId } = submission.value
 
-	const course = await prisma.course.findFirst({
-		select: { id: true, ownerId: true, owner: { select: { username: true } } },
-		where: { id: courseId },
+	const course = await drizzle.query.Course.findFirst({
+		columns: { id: true, ownerId: true },
+		with: {
+			owner: {
+				columns: { username: true },
+			},
+		},
+		where: eq(Course.id, courseId),
 	})
 	invariantResponse(course, 'Course not found', { status: 404 })
 
@@ -116,7 +129,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		isOwner ? `delete:course:own` : `delete:course:any`,
 	)
 
-	await prisma.course.delete({ where: { id: course.id } })
+	await drizzle.delete(Course).where(eq(Course.id, courseId))
 
 	// Redirecting After Deletion
 	return redirectWithToast(`/users/${course.owner.username}/courses`, {
@@ -158,43 +171,58 @@ console.log('data.course.ownerId', data.course.ownerId)
 				</p>
 			)}
 			</div>
-			<div className={`${displayBar ? 'pb-24' : 'pb-12'} overflow-y-auto `}>
-			<ul className="flex flex-wrap gap-5 py-5">
- 			 {data.course.images.map((image) => (
-   				 <li key={image.id}>
-     			 <a href={getCourseImgSrc(image.id)} target="_blank" rel="noopener noreferrer">
-      		  <img
-				src={getCourseImgSrc(image.id)}
-				alt={image.altText ?? ''}
-				className="h-32 w-32 rounded-lg object-cover"
-				width={512}
-				height={512}
-				/>
-      			</a>
-    		</li>
-  			))}
-		</ul>
-		<div className="space-y-4">
-			<div className="">
-				<label className="block text-sm font-semibold text-muted-foreground mb-1">
-      			{t('coursePage.description')}:
-				</label>
+			<div
+	className={`${
+		displayBar ? 'pb-24' : 'pb-12'
+	} overflow-y-auto flex flex-col lg:flex-row gap-8`}
+>
+	{/* LEFT: Description and Content */}
+	<div className="lg:w-2/3 space-y-6">
+		{/* Description */}
+		<div>
+			<label className="block text-sm font-semibold text-muted-foreground mb-1">
+				{t('coursePage.description')}:
+			</label>
 			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.description}
-				</p>
-				</div>
-			</div>
-		<div className="space-y-4">
-			<div className="">
-				<label className="block text-sm font-semibold text-muted-foreground mb-1">
-      			{t('coursePage.content')}:
-				</label>
+			</p>
+		</div>
+
+		{/* Content */}
+		<div>
+			<label className="block text-sm font-semibold text-muted-foreground mb-1">
+				{t('coursePage.content')}:
+			</label>
 			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.content}
-				</p>
-				</div>
-			</div>
-			</div>
+			</p>
+		</div>
+	</div>
+
+	{/* RIGHT: Images */}
+	<div className="lg:w-1/3 space-y-2">
+		<ul className="grid grid-cols-2 gap-4">
+			{data.course.images.map((image) => (
+				<li key={image.id}>
+					<a
+						href={getCourseImgSrc(image.id)}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<img
+							src={getCourseImgSrc(image.id)}
+							alt={image.altText ?? ''}
+							className="h-32 w-full rounded-lg object-cover"
+							width={512}
+							height={512}
+						/>
+					</a>
+				</li>
+			))}
+		</ul>
+	</div>
+</div>
+
 			
 			{displayBar && (
 				<div className={floatingToolbarClassName}>

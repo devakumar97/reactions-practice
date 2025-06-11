@@ -4,8 +4,8 @@
   "sideEffects": false,
   "license": "MIT",
   "epic-stack": {
-    "head": "0920e0001f2ac856a675b9e35bb41262a731b66f",
-    "date": "2025-06-11T14:59:55Z"
+    "head": "2fa9419f629f5a7842a46e13c476d115da3e1480",
+    "date": "2025-06-11T15:06:40Z"
   },
   "author": "Devakumar",
   "type": "module",
@@ -80,6 +80,7 @@
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.44.2",
     "execa": "^9.4.1",
     "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
@@ -96,6 +97,7 @@
     "litefs-js": "^1.1.2",
     "lru-cache": "^11.0.1",
     "morgan": "^1.10.0",
+    "pg": "^8.16.0",
     "prisma": "^5.21.1",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
@@ -106,6 +108,8 @@
     "remix-i18next": "^5.3.0",
     "remix-utils": "^7.7.0",
     "set-cookie-parser": "^2.7.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "sonner": "^1.5.0",
     "source-map-support": "^0.5.21",
     "spin-delay": "^2.0.1",
@@ -147,6 +151,7 @@
     "@vitejs/plugin-react": "^4.3.3",
     "@vitest/coverage-v8": "^2.1.3",
     "autoprefixer": "^10.4.20",
+    "drizzle-kit": "^0.31.1",
     "enforce-unique": "^1.3.0",
     "esbuild": "^0.24.0",
     "eslint": "^9.13.0",

@@ -1,36 +1,34 @@
+import { invariant } from '@epic-web/invariant'
 import { remember } from '@epic-web/remember'
-import { PrismaClient } from '@prisma/client'
+import { Client } from 'pg'
+import { drizzle as DrizzleClient } from 'drizzle-orm/node-postgres'
+import { type Logger } from 'drizzle-orm'
 import chalk from 'chalk'
+import * as schema from '../../drizzle/schema'
 
-export const prisma = remember('prisma', () => {
-	// NOTE: if you change anything in this function you'll need to restart
-	// the dev server to see your changes.
+class DrizzleLogger implements Logger {
+  logQuery(query: string, params: unknown[]) {
+    const formatted = query.replace(/\$(\d+)/g, (_, i) => JSON.stringify(params[+i - 1]))
+    console.log(chalk.blueBright('SQL →'), formatted)
+  }
+}
 
-	// Feel free to change this log threshold to something that makes sense for you
-	const logThreshold = 20
+	export const drizzle = remember('drizzle', () => {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  })
 
-	const client = new PrismaClient({
-		log: [
-			{ level: 'query', emit: 'event' },
-			{ level: 'error', emit: 'stdout' },
-			{ level: 'warn', emit: 'stdout' },
-		],
-	})
-	client.$on('query', async (e) => {
-		if (e.duration < logThreshold) return
-		const color =
-			e.duration < logThreshold * 1.1
-				? 'green'
-				: e.duration < logThreshold * 1.2
-					? 'blue'
-					: e.duration < logThreshold * 1.3
-						? 'yellow'
-						: e.duration < logThreshold * 1.4
-							? 'redBright'
-							: 'red'
-		const dur = chalk[color](`${e.duration}ms`)
-		console.info(`prisma:query - ${dur} - ${e.query}`)
-	})
-	void client.$connect()
-	return client
-})
+  client.connect() // Important: connect manually before passing to drizzle
+
+  const drizzle = DrizzleClient(client, {
+    schema,
+    logger: new DrizzleLogger(),
+  })
+
+  return drizzle
+  })
+
+export function first<T>(results: T[]): T {
+  invariant(results[0], 'Expected at least one result')
+  return results[0]
+}

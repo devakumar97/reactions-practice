@@ -6,20 +6,17 @@ import {
 	type MetaFunction,
 } from '@remix-run/node'
 import {
-	Form,
 	Link,
 	Links,
 	Meta,
 	Outlet,
 	Scripts,
 	ScrollRestoration,
-	useFetcher,
 	useLoaderData,
 	useMatches,
-	useSubmit,
 } from '@remix-run/react'
 import { withSentry } from '@sentry/remix'
-import { useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { HoneypotProvider } from 'remix-utils/honeypot/react'
 import appleTouchIconAssetUrl from './assets/favicons/apple-touch-icon.png'
 import faviconAssetUrl from './assets/favicons/favicon.svg'
@@ -28,7 +25,7 @@ import { EpicProgress } from './components/progress-bar.tsx'
 import { SearchBar } from './components/search-bar.tsx'
 import { useToast } from './components/toaster.tsx'
 import { Button } from './components/ui/button.tsx'
-import { Icon, href as iconsHref } from './components/ui/icon.tsx'
+import {href as iconsHref } from './components/ui/icon.tsx'
 import { EpicToaster } from './components/ui/sonner.tsx'
 import {
 	ThemeSwitch,
@@ -38,20 +35,26 @@ import {
 import tailwindStyleSheetUrl from './styles/tailwind.css?url'
 import { getUserId, logout } from './utils/auth.server.ts'
 import { ClientHintCheck, getHints } from './utils/client-hints.tsx'
-import { prisma } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { honeypot } from './utils/honeypot.server.ts'
-import { combineHeaders, getDomainUrl, getUserImgSrc } from './utils/misc.tsx'
+import { combineHeaders, getDomainUrl } from './utils/misc.tsx'
 import { useNonce } from './utils/nonce-provider.ts'
 import { type Theme, getTheme } from './utils/theme.server.ts'
 import { makeTimings, time } from './utils/timing.server.ts'
 import { getToast } from './utils/toast.server.ts'
-import { useOptionalUser, useUser } from './utils/user.ts'
+import { useOptionalUser } from './utils/user.ts'
 import {i18n, useChangeLanguage} from './utils/i18n.ts'
 import { useTranslation } from 'react-i18next'
 import { getLanguage } from './utils/language-server.ts'
 import { UserDropdown } from './components/user-drowpdown.tsx'
 import { LanguageDropDown } from './components/language-dropdown.tsx'
+
+import { io, type Socket } from 'socket.io-client'
+import { SocketProvider } from '#app/utils/context'
+
+import { eq } from 'drizzle-orm'
+import { User } from '../drizzle/schema.ts'
+import { drizzle } from './utils/db.server.ts'
 
 export const links: LinksFunction = () => {
 	return [
@@ -88,29 +91,58 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		desc: 'getUserId in root',
 	})
 	const locale = await getLanguage(request)
-	const user = userId
-		? await time(
-				() =>
-					prisma.user.findUniqueOrThrow({
-						select: {
-							id: true,
-							name: true,
-							username: true,
-							image: { select: { id: true } },
-							roles: {
-								select: {
-									name: true,
-									permissions: {
-										select: { entity: true, action: true, access: true },
+	let user = null
+	if (userId) {
+		const queryResult = await time(
+			() =>
+				drizzle.query.User.findFirst({
+					columns: {
+						id: true,
+						name: true,
+						username: true,
+					},
+					with: {
+						image: { columns: { id: true } },
+						roles: {
+							with: {
+								role: {
+									columns: { name: true },
+									with: {
+										permissionToRoles: {
+											with: {
+												permission: {
+													columns: {
+														entity: true,
+														action: true,
+														access: true,
+													},
+												},
+											},
+										},
 									},
 								},
 							},
 						},
-						where: { id: userId },
-					}),
-				{ timings, type: 'find user', desc: 'find user in root' },
-			)
-		: null
+					},
+					where: eq(User.id, userId),
+				}),
+			{ timings, type: 'find user', desc: 'find user in root' },
+		)
+		if (queryResult) {
+			user = {
+				id: queryResult?.id,
+				name: queryResult?.name,
+				username: queryResult?.username,
+				image: queryResult?.image,
+				roles: queryResult?.roles.map((roleToUser) => ({
+					name: roleToUser.role.name,
+					permissions: roleToUser.role.permissionToRoles.map(
+						(permissionToRole) => permissionToRole.permission,
+					),
+				})),
+			}
+		}
+	}
 	if (userId && !user) {
 		console.info('something weird happened')
 		// something weird happened... The user is authenticated but we can't find
@@ -215,6 +247,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+	/* <-- Adding state to handle socket connection --> */
+    const [socket, setSocket] = useState<Socket | undefined>();
+
+    useEffect(() => {
+        const newSocket = io();
+        setSocket(newSocket);
+        return () => {
+            newSocket.close();
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!socket) return;
+        socket.on("confirmation" , (data) => {
+            console.log(data);
+        })
+    },[socket])
+	/* <-- End of adding state to handle socket connection --> */
+
 	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
 	const theme = useTheme()
@@ -250,9 +301,11 @@ function App() {
 						<div className="block w-full sm:hidden">{searchBar}</div>
 					</nav>
 				</header>
-				<div className="flex-1">
-					<Outlet />
-				</div>
+				<SocketProvider socket={socket} >
+                    <div className="flex-1">
+                        <Outlet />
+                    </div>
+                </SocketProvider>
 			</div>
 			<EpicToaster closeButton position="top-center" theme={theme} />
 			<EpicProgress />
