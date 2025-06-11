@@ -5,25 +5,32 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
 import { Icon } from '#app/components/ui/icon.tsx'
-import { prisma } from '#app/utils/db.server.ts'
 import { getUserImgSrc } from '#app/utils/misc.tsx'
 import { useOptionalUser } from '#app/utils/user.ts'
 import { useEffect } from 'react'
 import { useSocket } from '#app/utils/context.tsx'
+import { eq } from 'drizzle-orm'
+import { drizzle } from '#app/utils/db.server.ts'
+import { User } from '../../../drizzle/schema'
+
 
 export async function loader({ params }: LoaderFunctionArgs) {
-	const user = await prisma.user.findFirst({
-		select: {
+	const user = await drizzle.query.User.findFirst({
+		columns: {
 			id: true,
 			name: true,
 			username: true,
 			createdAt: true,
-			image: { select: { id: true } },
 		},
-		where: {
-			username: params.username,
+			with: {
+			image: {
+				columns: {
+					id: true,
+				},
+			},
 		},
-	})
+		where: eq(User.username, params.username ?? ''),
+		})
 
 	invariantResponse(user, 'User not found', { status: 404 })
 

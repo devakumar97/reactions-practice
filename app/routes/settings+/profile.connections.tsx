@@ -26,36 +26,31 @@ import {
 	providerIcons,
 	providerNames,
 } from '#app/utils/connections.tsx'
-import { prisma } from '#app/utils/db.server.ts'
+import { drizzle } from '#app/utils/db.server.ts'
 import { makeTimings } from '#app/utils/timing.server.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type BreadcrumbHandle } from './profile.tsx'
+import { eq, and } from 'drizzle-orm'
+import { Connection } from '../../../drizzle/schema.ts'
+import { userCanDeleteConnections } from './profile.connections.server.tsx'
+
 
 export const handle: BreadcrumbHandle & SEOHandle = {
 	breadcrumb: <Icon name="link-2">Connections</Icon>,
 	getSitemapEntries: () => null,
 }
 
-async function userCanDeleteConnections(userId: string) {
-	const user = await prisma.user.findUnique({
-		select: {
-			password: { select: { userId: true } },
-			_count: { select: { connections: true } },
-		},
-		where: { id: userId },
-	})
-	// user can delete their connections if they have a password
-	if (user?.password) return true
-	// users have to have more than one remaining connection to delete one
-	return Boolean(user?._count.connections && user?._count.connections > 1)
-}
-
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
 	const timings = makeTimings('profile connections loader')
-	const rawConnections = await prisma.connection.findMany({
-		select: { id: true, providerName: true, providerId: true, createdAt: true },
-		where: { userId },
+	const rawConnections = await drizzle.query.Connection.findMany({
+		columns: {
+			id: true,
+			providerName: true,
+			providerId: true,
+			createdAt: true,
+		},
+		where: eq(Connection.userId, userId),
 	})
 	const connections: Array<{
 		providerName: ProviderName
@@ -110,12 +105,9 @@ export async function action({ request }: ActionFunctionArgs) {
 	)
 	const connectionId = formData.get('connectionId')
 	invariantResponse(typeof connectionId === 'string', 'Invalid connectionId')
-	await prisma.connection.delete({
-		where: {
-			id: connectionId,
-			userId: userId,
-		},
-	})
+	await drizzle
+		.delete(Connection)
+		.where(and(eq(Connection.id, connectionId), eq(Connection.userId, userId)))
 	const toastHeaders = await createToastHeaders({
 		title: 'Deleted',
 		description: 'Your connection has been deleted.',
@@ -134,7 +126,7 @@ export default function Connections() {
 					<ul className="flex flex-col gap-4">
 						{data.connections.map((c) => (
 							<li key={c.id}>
-								<Connection
+								<ConnectionComponent
 									connection={c}
 									canDelete={data.canDeleteConnections}
 								/>
@@ -158,7 +150,7 @@ export default function Connections() {
 	)
 }
 
-function Connection({
+function ConnectionComponent({
 	connection,
 	canDelete,
 }: {
