@@ -156,7 +156,6 @@ console.log('data.course.ownerId', data.course.ownerId)
 	const displayBar = canDelete || isOwner
 	const basePath = 'courseEditor.form'
 	return (
-
 			<div className="flex flex-col space-y-6 px-4 py-6 text-foreground bg-background max-h-[80vh] overflow-y-auto rounded-lg">
 
 			<h2 id="course-title" className="mb-2 pt-12 text-h2 lg:mb-6">
