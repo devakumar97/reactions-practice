@@ -1,6 +1,6 @@
-CREATE TYPE "public"."course_level" AS ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED');--> statement-breakpoint
+CREATE TYPE "public"."CourseLevel" AS ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED');--> statement-breakpoint
 CREATE TABLE "Connection" (
-	"id" text PRIMARY KEY NOT NULL,
+	"id" text NOT NULL,
 	"providerName" text NOT NULL,
 	"providerId" text NOT NULL,
 	"createdAt" timestamp with time zone DEFAULT now() NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE "CourseTranslation" (
 	"title" text NOT NULL,
 	"description" text NOT NULL,
 	"content" text NOT NULL,
-	"level" "course_level" NOT NULL,
+	"level" "CourseLevel" NOT NULL,
 	CONSTRAINT "CourseTranslation_courseId_languageId_pk" PRIMARY KEY("courseId","languageId")
 );
 --> statement-breakpoint
@@ -109,8 +109,8 @@ CREATE TABLE "UserImage" (
 );
 --> statement-breakpoint
 CREATE TABLE "Verification" (
-	"id" text PRIMARY KEY NOT NULL,
-	"createdAt" timestamp with time zone NOT NULL,
+	"id" text NOT NULL,
+	"createdAt" timestamp with time zone DEFAULT now() NOT NULL,
 	"type" text NOT NULL,
 	"target" text NOT NULL,
 	"secret" text NOT NULL,

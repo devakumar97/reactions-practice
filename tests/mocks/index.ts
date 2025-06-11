@@ -11,12 +11,21 @@ server.listen({
 		// Note: a request handler with passthrough is not suited with this type of url
 		//       until there is a more permissible url catching system
 		//       like requested at https://github.com/mswjs/msw/issues/1804
-		if (request.url.includes('.sentry.io')) {
-			return
-		}
-		// Print the regular MSW unhandled request warning otherwise.
-		print.warning()
-	},
+		const url = request.url
+
+    // ✅ Ignore translation JSON file requests (i18next, etc.)
+    if (url.includes('/locales/')) {
+      return // Don't print any MSW warnings
+    }
+
+    // ✅ Ignore Sentry requests
+    if (url.includes('.sentry.io')) {
+      return
+    }
+
+    // Otherwise warn about unhandled requests
+    print.warning()
+  },
 })
 
 if (process.env.NODE_ENV !== 'test') {

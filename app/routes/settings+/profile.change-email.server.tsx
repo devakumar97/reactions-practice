@@ -56,7 +56,7 @@ export async function handleVerification({
 
 	void sendEmail({
 		to: preUpdateUser.email,
-		subject: 'Epic Stack email changed',
+		subject: 'Email changed',
 		react: <EmailChangeNoticeEmail userId={user.id} />,
 	})
 

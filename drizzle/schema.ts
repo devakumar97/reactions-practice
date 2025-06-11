@@ -12,12 +12,11 @@ import {
   } from 'drizzle-orm/pg-core'
   import { customType } from 'drizzle-orm/pg-core';
 
-// Custom type for bytea
-const bytea = customType<{ data: string }>({
+const bytea = customType<{ data: Buffer }>({
   dataType() {
-    return 'bytea';
+    return 'bytea'
   },
-});
+})
 
 const timestamps = {
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
@@ -25,7 +24,7 @@ const timestamps = {
 }
 
 // Enum for course level
-export const courseLevelEnum = pgEnum('course_level', ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
+export const CourseLevelEnum = pgEnum('CourseLevel', ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
 
 export const User = pgTable('User', {
 	id: text()
@@ -102,7 +101,7 @@ export const CourseTranslation = pgTable('CourseTranslation', {
   title: text().notNull(),
   description: text().notNull(),
   content: text().notNull(),
-  level: courseLevelEnum().notNull(),
+  level: CourseLevelEnum().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.courseId, table.languageId] }),
 }));
@@ -163,8 +162,7 @@ export const Role = pgTable('Role', {
 export const Verification = pgTable(
 	'Verification',
 	{
-		id: text('id')
-			.primaryKey()
+		id: text('id').notNull()
 			.$defaultFn(() => createId()),
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 		type: text().notNull(),
@@ -188,7 +186,7 @@ export const Connection = pgTable(
 	'Connection',
 	{
 		id: text()
-			.primaryKey()
+			.notNull()
 			.$defaultFn(() => createId()),
 		providerName: text().notNull(),
 		providerId: text().notNull(),

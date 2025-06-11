@@ -30,29 +30,14 @@ import { drizzle } from '#app/utils/db.server.ts'
 import { makeTimings } from '#app/utils/timing.server.ts'
 import { createToastHeaders } from '#app/utils/toast.server.ts'
 import { type BreadcrumbHandle } from './profile.tsx'
-import { count, or, eq, gt, isNotNull, and } from 'drizzle-orm'
-import { User, Password, Connection } from '../../../drizzle/schema.ts'
+import { eq, and } from 'drizzle-orm'
+import { Connection } from '../../../drizzle/schema.ts'
+import { userCanDeleteConnections } from './profile.connections.server.tsx'
 
 
 export const handle: BreadcrumbHandle & SEOHandle = {
 	breadcrumb: <Icon name="link-2">Connections</Icon>,
 	getSitemapEntries: () => null,
-}
-
-async function userCanDeleteConnections(userId: string) {
-	const user = await drizzle
-		.select({ countConnections: count(Connection.id) })
-		.from(User)
-		.leftJoin(Password, eq(User.id, Password.userId))
-		.leftJoin(Connection, eq(User.id, Connection.userId))
-		.groupBy(User.id)
-		.where(eq(User.id, userId))
-		// user can delete all their connections if they have a password
-		// otherwise, they must keep at least one connection
-		.having(({ countConnections }) =>
-			or(gt(countConnections, 1), isNotNull(Password.userId)),
-		)
-	return Boolean(user)
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {

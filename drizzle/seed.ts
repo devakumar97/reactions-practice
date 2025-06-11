@@ -16,6 +16,18 @@ import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
 async function seed() {
+  await db.delete(PermissionToRole);
+await db.delete(RoleToUser);
+await db.delete(Permission);
+await db.delete(Role);
+await db.delete(CourseImage);
+await db.delete(UserImage);
+await db.delete(CourseTranslation);
+await db.delete(Course);
+await db.delete(Password);
+await db.delete(User);
+await db.delete(Language);
+
   console.log('🌱 Starting seed...');
 
   // 1. Seed languages
@@ -58,15 +70,24 @@ async function seed() {
 
   // 5. Create permissions
   const permissions = [
-		{ action: 'create', entity: 'course', access: 'any' },
-		{ action: 'read', entity: 'course', access: 'any' },
-		{ action: 'update', entity: 'course', access: 'any' },
-		{ action: 'delete', entity: 'course', access: 'any' },
+		{ action: 'create', entity: 'course', access: 'own' },
+  { action: 'create', entity: 'course', access: 'any' },
+  { action: 'read', entity: 'course', access: 'own' },
+  { action: 'read', entity: 'course', access: 'any' },
+  { action: 'update', entity: 'course', access: 'own' },
+  { action: 'update', entity: 'course', access: 'any' },
+  { action: 'delete', entity: 'course', access: 'own' },
+  { action: 'delete', entity: 'course', access: 'any' },
 
-		{ action: 'create', entity: 'user', access: 'any' },
-		{ action: 'read', entity: 'user', access: 'any' },
-		{ action: 'update', entity: 'user', access: 'any' },
-		{ action: 'delete', entity: 'user', access: 'any' },
+		// User
+  { action: 'create', entity: 'user', access: 'own' },
+  { action: 'create', entity: 'user', access: 'any' },
+  { action: 'read', entity: 'user', access: 'own' },
+  { action: 'read', entity: 'user', access: 'any' },
+  { action: 'update', entity: 'user', access: 'own' },
+  { action: 'update', entity: 'user', access: 'any' },
+  { action: 'delete', entity: 'user', access: 'own' },
+  { action: 'delete', entity: 'user', access: 'any' },
 
 		{ action: 'create', entity: 'role', access: 'any' },
 		{ action: 'read', entity: 'role', access: 'any' },

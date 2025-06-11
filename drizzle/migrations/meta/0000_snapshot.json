@@ -1,5 +1,5 @@
 {
-  "id": "577f5f4e-6c4a-4e8e-b1a5-300a120ffc74",
+  "id": "a90e3c7a-2759-493d-82c2-5b06cd3f86b0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -11,7 +11,7 @@
         "id": {
           "name": "id",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
         "providerName": {
@@ -310,7 +310,7 @@
         },
         "level": {
           "name": "level",
-          "type": "course_level",
+          "type": "CourseLevel",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
@@ -950,14 +950,15 @@
         "id": {
           "name": "id",
           "type": "text",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "now()"
         },
         "type": {
           "name": "type",
@@ -1040,8 +1041,8 @@
     }
   },
   "enums": {
-    "public.course_level": {
-      "name": "course_level",
+    "public.CourseLevel": {
+      "name": "CourseLevel",
       "schema": "public",
       "values": [
         "BEGINNER",

@@ -13,13 +13,12 @@ export { action } from './__course-editor.server.tsx'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
+
 	if (!params.courseId) {
 		throw new Response('CourseId is required', { status: 400 })
 	}
-  if (!params.languageId) {
-		throw new Response('languageId is required', { status: 400 })
-	}
-  
+
+	const languageId = params.languageId ?? 'en' 
 	const course = await drizzle.query.Course.findFirst({
 	where: and(
 		eq(Course.id, params.courseId),
@@ -34,9 +33,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 			},
 		},
 		translations: {
-			where: eq(CourseTranslation.languageId, params.languageId),
+			where: eq(CourseTranslation.languageId, languageId),
 			limit: 1,
 			columns: {
+				languageId: true,
 				title: true,
 				description: true,
 				content: true,
@@ -50,23 +50,19 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	},
 });
 
-const courseWithTranslation = course
-  ? {
-      ...course,
-    translation: course.translations[0] ?? null,
-	  title: '',
-    description: '',
-    content: '',
-    level: 'BEGINNER', // or default level
-    }
-  : null;
-	invariantResponse(course, 'Course not found', { status: 404 })
-	return json({courseWithTranslation })
+invariantResponse(course, 'Course not found', { status: 404 })
+
+const courseWithTranslation = {
+		...course,
+		translation: course.translations?.[0] ?? null,
+	}
+
+	return json({ course: courseWithTranslation })
 }
 
 export default function CourseEdit() {
 	const data = useLoaderData<typeof loader>()
-	return <CourseEditor course={data.courseWithTranslation} />
+	return <CourseEditor course={data.course} />
 }
 
 export function ErrorBoundary() {

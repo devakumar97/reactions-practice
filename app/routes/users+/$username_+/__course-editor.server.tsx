@@ -168,7 +168,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			...(update.blob
 				? {
 						contentType: update.contentType,
-						blob: update.blob.toString('base64'),  // Convert Buffer to base64 string here
+						blob: update.blob,  // Convert Buffer to base64 string here
 				  }
 				: {}),
 		})
@@ -184,7 +184,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			courseId: course.id,
 			altText: img.altText ?? null,
 			contentType: img.contentType ?? '',
-			blob: img.blob.toString('base64'),  // <-- Convert Buffer to base64 string here
+			blob: img.blob,
 		}))
 	)
 }

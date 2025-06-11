@@ -132,7 +132,6 @@ export function CourseEditor({
 						<Field
 							labelProps={{ children: t('courseEditor.form.duration') }}
 							inputProps={{
-							defaultValue: course?.duration,
 							...getInputProps(fields.duration,{ type: 'number' }),
 							}}
 							errors={fields.duration.errors}
@@ -140,10 +139,8 @@ export function CourseEditor({
 						<DropdownField 
 							labelProps={{ children: t('courseEditor.form.language') }}
 							selectProps={{
-							name: 'languageId',
-							defaultValue: course?.translation?.languageId ?? "",
-							required: true,
-							children: (
+    						...getInputProps(fields.languageId, { type: 'text' }),
+    						children: (
 							<>
 							<option value="" disabled hidden>
 								{t('courseEditor.form.selectLanguage')}
@@ -158,9 +155,8 @@ export function CourseEditor({
 						<DropdownField 
 							labelProps={{ children: t('courseEditor.form.level') }}
 							selectProps={{
-							name: 'level',
-							defaultValue: course?.translation?.level ?? "", 
-							children: (
+    						...getInputProps(fields.level, { type: 'text' }),
+    						children: (
 							<>
 								<option value="" disabled hidden>
 								{t('courseEditor.form.selectLevel')}

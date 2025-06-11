@@ -30,7 +30,7 @@ import { type loader as courseLoader } from './courses'
 import { getLanguage } from '#app/utils/language-server.ts'
 import { useTranslation } from 'react-i18next'
 import { getTranslatedLabel } from '#app/utils/translateLabel.ts'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { Course, CourseTranslation } from '../../../../drizzle/schema.ts'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
@@ -41,14 +41,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	}
 
 	const course = await drizzle.query.Course.findFirst({
-  where: eq(Course.id, params.courseId),
-  columns: {
+ 	 where: eq(Course.id, params.courseId),
+  	columns: {
     id: true,
     duration: true,
     ownerId: true,
     updatedAt: true,
-  },
-  with: {
+  		},
+  	with: {
     images: {
       columns: {
         id: true,
@@ -155,23 +155,8 @@ console.log('data.course.ownerId', data.course.ownerId)
 
 	const displayBar = canDelete || isOwner
 	const basePath = 'courseEditor.form'
-
-
-	// const sectionRef = useRef<HTMLElement>(null)
-
-	// useEffect(() => {
-	// 	if (sectionRef.current) {
-	// 		sectionRef.current.focus()
-	// 	}
-	// }, [data.course.id])
-	// console.log(data.course.images);
 	return (
-		// <section
-		// 	ref={sectionRef}
-		// 	className="absolute inset-0 flex flex-col px-10"
-		// 	aria-labelledby="course-title"
-		// 	tabIndex={-1}
-		// >
+
 			<div className="flex flex-col space-y-6 px-4 py-6 text-foreground bg-background max-h-[80vh] overflow-y-auto rounded-lg">
 
 			<h2 id="course-title" className="mb-2 pt-12 text-h2 lg:mb-6">
@@ -187,43 +172,58 @@ console.log('data.course.ownerId', data.course.ownerId)
 				</p>
 			)}
 			</div>
-			<div className={`${displayBar ? 'pb-24' : 'pb-12'} overflow-y-auto `}>
-			<ul className="flex flex-wrap gap-5 py-5">
- 			 {data.course.images.map((image) => (
-   				 <li key={image.id}>
-     			 <a href={getCourseImgSrc(image.id)} target="_blank" rel="noopener noreferrer">
-      		  <img
-				src={getCourseImgSrc(image.id)}
-				alt={image.altText ?? ''}
-				className="h-32 w-32 rounded-lg object-cover"
-				width={512}
-				height={512}
-				/>
-      			</a>
-    		</li>
-  			))}
-		</ul>
-		<div className="space-y-4">
-			<div className="">
-				<label className="block text-sm font-semibold text-muted-foreground mb-1">
-      			{t('coursePage.description')}:
-				</label>
+			<div
+	className={`${
+		displayBar ? 'pb-24' : 'pb-12'
+	} overflow-y-auto flex flex-col lg:flex-row gap-8`}
+>
+	{/* LEFT: Description and Content */}
+	<div className="lg:w-2/3 space-y-6">
+		{/* Description */}
+		<div>
+			<label className="block text-sm font-semibold text-muted-foreground mb-1">
+				{t('coursePage.description')}:
+			</label>
 			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.description}
-				</p>
-				</div>
-			</div>
-		<div className="space-y-4">
-			<div className="">
-				<label className="block text-sm font-semibold text-muted-foreground mb-1">
-      			{t('coursePage.content')}:
-				</label>
+			</p>
+		</div>
+
+		{/* Content */}
+		<div>
+			<label className="block text-sm font-semibold text-muted-foreground mb-1">
+				{t('coursePage.content')}:
+			</label>
 			<p className="whitespace-break-spaces text-sm md:text-lg text-foreground">
 				{data.course.content}
-				</p>
-				</div>
-			</div>
-			</div>
+			</p>
+		</div>
+	</div>
+
+	{/* RIGHT: Images */}
+	<div className="lg:w-1/3 space-y-2">
+		<ul className="grid grid-cols-2 gap-4">
+			{data.course.images.map((image) => (
+				<li key={image.id}>
+					<a
+						href={getCourseImgSrc(image.id)}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<img
+							src={getCourseImgSrc(image.id)}
+							alt={image.altText ?? ''}
+							className="h-32 w-full rounded-lg object-cover"
+							width={512}
+							height={512}
+						/>
+					</a>
+				</li>
+			))}
+		</ul>
+	</div>
+</div>
+
 			
 			{displayBar && (
 				<div className={floatingToolbarClassName}>
@@ -246,7 +246,6 @@ console.log('data.course.ownerId', data.course.ownerId)
 				</div>
 			)}
 			</div>
-		// </section>
 	)
 }
 

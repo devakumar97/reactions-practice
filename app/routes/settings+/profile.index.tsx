@@ -53,7 +53,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.leftJoin(UserImage, eq(User.id, UserImage.userId))
 		.leftJoin(Session, eq(User.id, Session.userId))
 		.where(and(eq(User.id, userId), gt(Session.expirationDate, new Date())))
-		.groupBy(User.id)
+		.groupBy(
+			User.id,
+			User.name,
+			User.username,
+			User.email,
+			UserImage.id,
+		)
 
 	invariant(user, 'User not found')
 
@@ -169,7 +175,7 @@ export default function EditUserProfile() {
 				<div>
 					<Link
 						reloadDocument
-						download="my-epic-notes-data.json"
+						download="deva's Courses-data.json"
 						to="/resources/download-user-data"
 					>
 						<Icon name="download">Download your data</Icon>
