@@ -1,54 +1,77 @@
-<div align="center">
-  <h1 align="center"><a href="https://www.epicweb.dev/epic-stack">The Epic Stack 🚀</a></h1>
-  <strong align="center">
-    Ditch analysis paralysis and start shipping Epic Web apps.
-  </strong>
-  <p>
-    This is an opinionated project starter and reference that allows teams to
-    ship their ideas to production faster and on a more stable foundation based
-    on the experience of <a href="https://kentcdodds.com">Kent C. Dodds</a> and
-    <a href="https://github.com/epicweb-dev/epic-stack/graphs/contributors">contributors</a>.
-  </p>
-</div>
+## 🌍 Feature: Internationalization (i18n) Support (`feat/internationalization`)
 
-```sh
-npx create-epic-app@latest
-```
+### ✅ Summary
 
-[![The Epic Stack](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/246885449-1b00286c-aa3d-44b2-9ef2-04f694eb3592.png)](https://www.epicweb.dev/epic-stack)
+Integrated full internationalization using `i18next`, allowing the app’s static
+content to be dynamically translated into multiple languages. This sets the
+foundation for global user accessibility.
 
-[The Epic Stack](https://www.epicweb.dev/epic-stack)
+---
 
-<hr />
+### 🌐 Languages Supported
 
-## Watch Kent's Introduction to The Epic Stack
+- **English (en)**
+- **Spanish (es)**
+- **French (fr)** _(Easily extendable to more languages by adding new JSON files
+  under `public/locales/`)_
 
-[![Epic Stack Talk slide showing Flynn Rider with knives, the text "I've been around and I've got opinions" and Kent speaking in the corner](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277818553-47158e68-4efc-43ae-a477-9d1670d4217d.png)](https://www.epicweb.dev/talks/the-epic-stack)
+---
 
-["The Epic Stack" by Kent C. Dodds](https://www.epicweb.dev/talks/the-epic-stack)
+### 🔧 Changes Made
 
-## Docs
+- **Language Switcher UI:**
 
-[Read the docs](https://github.com/epicweb-dev/epic-stack/blob/main/docs)
-(please 🙏).
+  - File: `/app/components/search-bar.tsx` (or in the navbar component)
+  - Dropdown with list of languages (e.g., English(en), Spanish(es), French(fr))
+  - Updates current language using URL-based routing (e.g.,
+    `/settings/change-language.$lang.tsx`)
 
-## Support
+- **Translation Utilities:**
 
-- 🆘 Join the
-  [discussion on GitHub](https://github.com/epicweb-dev/epic-stack/discussions)
-  and the [KCD Community on Discord](https://kcd.im/discord).
-- 💡 Create an
-  [idea discussion](https://github.com/epicweb-dev/epic-stack/discussions/new?category=ideas)
-  for suggestions.
-- 🐛 Open a [GitHub issue](https://github.com/epicweb-dev/epic-stack/issues) to
-  report a bug.
+  - `/app/utils/i18n.ts`: Client-side i18next configuration
+  - `/app/utils/i18next.server.ts`: Server-side support for i18n (for SSR)
 
-## Branding
+- **Route for Changing Language:**
 
-Want to talk about the Epic Stack in a blog post or talk? Great! Here are some
-assets you can use in your material:
-[EpicWeb.dev/brand](https://epicweb.dev/brand)
+  - `/app/routes/settings+/change-language.$lang.tsx`: Updates the language
+    cookie and redirects
 
-## Thanks
+- **Translation Files:**
 
-You rock 🪨
+  - `public/locales/en/common.json`
+  - `public/locales/es/common.json`
+  - `public/locales/fr/common.json`
+
+  Each file contains static key-value pairs for translatable text.
+
+---
+
+### 🧠 Why This Matters
+
+- Makes the application **accessible to non-English speakers**
+- Allows for **regional customization** in the future (date formats, messages)
+- Enhances **user experience and engagement**
+
+---
+
+### 🧪 How to Test
+
+1. Visit the navbar and open the language dropdown.
+2. Select a language (e.g., Español).
+3. Confirm that static UI content (like login labels, headers) switches to the
+   selected language.
+4. Refresh or revisit the page – language preference should persist.
+5. Check URL/route and confirm cookie or session is updated accordingly.
+
+---
+
+### ⚠️ Notes
+
+- Dynamic content (e.g., fetched from DB) needs additional translation logic if
+  multilingual support is required.
+- Make sure language files have consistent keys across translations.
+
+---
+### Reference
+
+https://github.com/rperon/epic-stack-with-i18n/
