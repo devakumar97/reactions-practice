@@ -1,54 +1,82 @@
-<div align="center">
-  <h1 align="center"><a href="https://www.epicweb.dev/epic-stack">The Epic Stack 🚀</a></h1>
-  <strong align="center">
-    Ditch analysis paralysis and start shipping Epic Web apps.
-  </strong>
-  <p>
-    This is an opinionated project starter and reference that allows teams to
-    ship their ideas to production faster and on a more stable foundation based
-    on the experience of <a href="https://kentcdodds.com">Kent C. Dodds</a> and
-    <a href="https://github.com/epicweb-dev/epic-stack/graphs/contributors">contributors</a>.
-  </p>
-</div>
+## 🔌 Feature: Realtime Socket Support (`feat/socket`)
 
-```sh
-npx create-epic-app@latest
+### ✅ Summary
+
+Implemented WebSocket support using `socket.io` to enable real-time communication features across the app.
+
+---
+
+### ⚙️ Tech Stack Used
+
+* **Socket.IO**
+* **Remix App Server Extension**
+* **Custom Context Provider** (`context.tsx`)
+* **Node Server Bootstrapping** (`server/index.ts`)
+
+---
+
+### 🔄 What Was Implemented
+
+#### 1. **Custom Express-based Remix Server**
+
+* Introduced `server/index.ts` to boot a custom server.
+* Integrated **Socket.IO** with the Remix request handler.
+* Supports both HTTP and WebSocket protocols.
+
+#### 2. **Realtime Connections via Context**
+
+* `utils/context.tsx` provides a React context that injects the socket instance into components.
+* Components can listen for or emit events like:
+
+  * `"user:connected"`
+  * `"user:disconnected"`
+  * `"user:typing"`
+  * `"user:update"`
+
+#### 3. **Dynamic User Routes**
+
+* Route: `routes/users+/$username.tsx`
+* Example usage: A "ping" button triggers the emit event and prints "pong"
+* When the user visits their profile page, a `"join"` event is emitted to the server.
+
+---
+
+### 📂 Folder Structure
+
+```bash
+app/
+├── root.tsx                   # Context provider wrapping the app
+├── routes/users+/$username.tsx  # Emits/receives socket events
+├── utils/context.tsx          # React Socket.IO client context
+server/
+└── index.ts                   # Custom Express server with Socket.IO
 ```
 
-[![The Epic Stack](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/246885449-1b00286c-aa3d-44b2-9ef2-04f694eb3592.png)](https://www.epicweb.dev/epic-stack)
+---
 
-[The Epic Stack](https://www.epicweb.dev/epic-stack)
+### 🧪 How to Test
 
-<hr />
+1. Run the dev server with:
 
-## Watch Kent's Introduction to The Epic Stack
+   ```bash
+   npm run dev
+   ```
+2. Open two browser tabs with different users:
 
-[![Epic Stack Talk slide showing Flynn Rider with knives, the text "I've been around and I've got opinions" and Kent speaking in the corner](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277818553-47158e68-4efc-43ae-a477-9d1670d4217d.png)](https://www.epicweb.dev/talks/the-epic-stack)
+   * Navigate to `/users/deva`
+   * Navigate to `/users/kumar`
+3. You should see console logs (or UI updates) when users "join" or perform socket-based actions.
 
-["The Epic Stack" by Kent C. Dodds](https://www.epicweb.dev/talks/the-epic-stack)
+---
 
-## Docs
+### 🧠 Why This Matters
 
-[Read the docs](https://github.com/epicweb-dev/epic-stack/blob/main/docs)
-(please 🙏).
+* Introduces a foundation for **real-time features** like:
 
-## Support
+  * Chat
+  * Notifications
+  * Presence tracking
+* Future-proofed with **context-based access** to socket anywhere in the app
+* Easily extendable to support room-based channels, events, etc.
 
-- 🆘 Join the
-  [discussion on GitHub](https://github.com/epicweb-dev/epic-stack/discussions)
-  and the [KCD Community on Discord](https://kcd.im/discord).
-- 💡 Create an
-  [idea discussion](https://github.com/epicweb-dev/epic-stack/discussions/new?category=ideas)
-  for suggestions.
-- 🐛 Open a [GitHub issue](https://github.com/epicweb-dev/epic-stack/issues) to
-  report a bug.
-
-## Branding
-
-Want to talk about the Epic Stack in a blog post or talk? Great! Here are some
-assets you can use in your material:
-[EpicWeb.dev/brand](https://epicweb.dev/brand)
-
-## Thanks
-
-You rock 🪨
+---
