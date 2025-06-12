@@ -1,54 +1,120 @@
-<div align="center">
-  <h1 align="center"><a href="https://www.epicweb.dev/epic-stack">The Epic Stack 🚀</a></h1>
-  <strong align="center">
-    Ditch analysis paralysis and start shipping Epic Web apps.
-  </strong>
-  <p>
-    This is an opinionated project starter and reference that allows teams to
-    ship their ideas to production faster and on a more stable foundation based
-    on the experience of <a href="https://kentcdodds.com">Kent C. Dodds</a> and
-    <a href="https://github.com/epicweb-dev/epic-stack/graphs/contributors">contributors</a>.
-  </p>
-</div>
+🧱 D Course
 
-```sh
-npx create-epic-app@latest
+A full-stack CRUD web application built using the
+[Epic Stack](https://github.com/epicweb-dev/epic-stack), enhanced with custom
+features like course management, multilingual support, custom Themes, Socket
+integration, Drizzle ORM migration, and more.
+
+---
+
+## 🚀 Features Overview
+
+- ✅ Full CRUD for Course entity (with translations and media)
+- 🧾 Generic Table + Modal Drawer UX
+- 🌐 Multi-language support with translations & dynamic language dropdown
+- 🎨 Custom Tailwind theme applied throughout
+- 🔄 Prisma → Drizzle ORM migration (complete)
+- 🔌 Socket integration for real-time interactivity
+
+---
+
+## 🛠️ Main Tech Stack
+
+- **Frontend**: Remix, React, TailwindCSS
+- **Backend**: Remix Loader & Actions, Socket.io
+- **Database**: PostgreSQL with Drizzle ORM
+
+---
+
+## 🧑‍💻 Getting Started
+
+> ⚠️ Prerequisites: Node.js ≥ 18, PostgreSQL installed locally.
+
+### 1. **Clone the Repository**
+
+```bash
+git clone https://github.com/devakumar97/reactions-practice.git
+cd reactions-practice
 ```
 
-[![The Epic Stack](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/246885449-1b00286c-aa3d-44b2-9ef2-04f694eb3592.png)](https://www.epicweb.dev/epic-stack)
+### 2. **Install Dependencies**
 
-[The Epic Stack](https://www.epicweb.dev/epic-stack)
+```bash
+npm install
+npm run build
+```
 
-<hr />
+### 3. **Set Environment Variables**
 
-## Watch Kent's Introduction to The Epic Stack
+Create a `.env` file based on `.env.example` and fill in the required values:
 
-[![Epic Stack Talk slide showing Flynn Rider with knives, the text "I've been around and I've got opinions" and Kent speaking in the corner](https://github-production-user-asset-6210df.s3.amazonaws.com/1500684/277818553-47158e68-4efc-43ae-a477-9d1670d4217d.png)](https://www.epicweb.dev/talks/the-epic-stack)
+```bash
+cp .env.example .env
+```
 
-["The Epic Stack" by Kent C. Dodds](https://www.epicweb.dev/talks/the-epic-stack)
+Key variables:
 
-## Docs
+```
+DATABASE_URL="postgres://<user>:<password>@localhost:5432/DBname"
+```
 
-[Read the docs](https://github.com/epicweb-dev/epic-stack/blob/main/docs)
-(please 🙏).
+### 4. **Set Up the Database**
 
-## Support
+```bash
+# Create the database
+createdb DBname
+# or manually createdb locally in pgAdmin
 
-- 🆘 Join the
-  [discussion on GitHub](https://github.com/epicweb-dev/epic-stack/discussions)
-  and the [KCD Community on Discord](https://kcd.im/discord).
-- 💡 Create an
-  [idea discussion](https://github.com/epicweb-dev/epic-stack/discussions/new?category=ideas)
-  for suggestions.
-- 🐛 Open a [GitHub issue](https://github.com/epicweb-dev/epic-stack/issues) to
-  report a bug.
+# Generate Migrations
+npx drizzle-kit generate
 
-## Branding
+# Generate and run Drizzle migrations
+npx drizzle-kit push
 
-Want to talk about the Epic Stack in a blog post or talk? Great! Here are some
-assets you can use in your material:
-[EpicWeb.dev/brand](https://epicweb.dev/brand)
+# Seed initial data
+npm run seed
+```
 
-## Thanks
+> You can inspect schema under `/drizzle/schema.ts` and seed logic under
+> `/drizzle/seed.ts`.
 
-You rock 🪨
+### 5. **Start the Dev Server**
+
+```bash
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) to get started.
+
+## 🔄 Prisma to Drizzle Migration Notes
+
+- All models have been ported to Drizzle (`pgTable`, `customType`, etc.)
+- Uses `drizzle-kit` for migrations.
+- Prisma client and schema have been fully removed.
+- Seed script was rewritten using native Drizzle insert/update queries.
+- refer `mod/drizzle` branch
+
+---
+
+## 🧪 Running Tests
+
+Coming soon (or replace with actual testing setup if you've added it):
+
+```bash
+npm test
+```
+
+---
+
+## 💡 Dev Tips
+
+- 🧪 Modify or add languages in `languages` table and see them reflected in the
+  UI. refer `feat/internationalization` branch
+- 🖼️ Add view, edit and delete course and course images via the modal drawer
+  UI(). refer `feat/CRUD` branch
+- 🧰 Use the generic table as a base for other entities like Projects, Users,
+  etc. refer `feat/CRUD` branch
+- 🎨 Modify or add custom Theme with custom color palette and see them reflected
+  in the UI. refer `feat/custom-themes` branch
+
+---
