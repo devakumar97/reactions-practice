@@ -14,19 +14,20 @@ import {
 } from './schema';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
+import { faker } from '@faker-js/faker';
 
 async function seed() {
   await db.delete(PermissionToRole);
-await db.delete(RoleToUser);
-await db.delete(Permission);
-await db.delete(Role);
-await db.delete(CourseImage);
-await db.delete(UserImage);
-await db.delete(CourseTranslation);
-await db.delete(Course);
-await db.delete(Password);
-await db.delete(User);
-await db.delete(Language);
+  await db.delete(RoleToUser);
+  await db.delete(Permission);
+  await db.delete(Role);
+  await db.delete(CourseImage);
+  await db.delete(UserImage);
+  await db.delete(CourseTranslation);
+  await db.delete(Course);
+  await db.delete(Password);
+  await db.delete(User);
+  await db.delete(Language);
 
   console.log('🌱 Starting seed...');
 
@@ -70,38 +71,33 @@ await db.delete(Language);
 
   // 5. Create permissions
   const permissions = [
-		{ action: 'create', entity: 'course', access: 'own' },
-  { action: 'create', entity: 'course', access: 'any' },
-  { action: 'read', entity: 'course', access: 'own' },
-  { action: 'read', entity: 'course', access: 'any' },
-  { action: 'update', entity: 'course', access: 'own' },
-  { action: 'update', entity: 'course', access: 'any' },
-  { action: 'delete', entity: 'course', access: 'own' },
-  { action: 'delete', entity: 'course', access: 'any' },
-
-		// User
-  { action: 'create', entity: 'user', access: 'own' },
-  { action: 'create', entity: 'user', access: 'any' },
-  { action: 'read', entity: 'user', access: 'own' },
-  { action: 'read', entity: 'user', access: 'any' },
-  { action: 'update', entity: 'user', access: 'own' },
-  { action: 'update', entity: 'user', access: 'any' },
-  { action: 'delete', entity: 'user', access: 'own' },
-  { action: 'delete', entity: 'user', access: 'any' },
-
-		{ action: 'create', entity: 'role', access: 'any' },
-		{ action: 'read', entity: 'role', access: 'any' },
-		{ action: 'update', entity: 'role', access: 'any' },
-		{ action: 'delete', entity: 'role', access: 'any' },
-
-		{ action: 'create', entity: 'permission', access: 'any' },
-		{ action: 'read', entity: 'permission', access: 'any' },
-		{ action: 'update', entity: 'permission', access: 'any' },
-		{ action: 'delete', entity: 'permission', access: 'any' },
+    { action: 'create', entity: 'course', access: 'own' },
+    { action: 'create', entity: 'course', access: 'any' },
+    { action: 'read', entity: 'course', access: 'own' },
+    { action: 'read', entity: 'course', access: 'any' },
+    { action: 'update', entity: 'course', access: 'own' },
+    { action: 'update', entity: 'course', access: 'any' },
+    { action: 'delete', entity: 'course', access: 'own' },
+    { action: 'delete', entity: 'course', access: 'any' },
+    { action: 'create', entity: 'user', access: 'own' },
+    { action: 'create', entity: 'user', access: 'any' },
+    { action: 'read', entity: 'user', access: 'own' },
+    { action: 'read', entity: 'user', access: 'any' },
+    { action: 'update', entity: 'user', access: 'own' },
+    { action: 'update', entity: 'user', access: 'any' },
+    { action: 'delete', entity: 'user', access: 'own' },
+    { action: 'delete', entity: 'user', access: 'any' },
+    { action: 'create', entity: 'role', access: 'any' },
+    { action: 'read', entity: 'role', access: 'any' },
+    { action: 'update', entity: 'role', access: 'any' },
+    { action: 'delete', entity: 'role', access: 'any' },
+    { action: 'create', entity: 'permission', access: 'any' },
+    { action: 'read', entity: 'permission', access: 'any' },
+    { action: 'update', entity: 'permission', access: 'any' },
+    { action: 'delete', entity: 'permission', access: 'any' },
   ];
 
   const now = new Date();
-
   const permissionRecords = permissions.map(p => ({
     id: randomUUID(),
     ...p,
@@ -112,26 +108,24 @@ await db.delete(Language);
 
   await db.insert(Permission).values(permissionRecords);
 
-  // 6. Link all permissions to the admin role
   const rolePermissionMappings = permissionRecords.map(p => ({
     id: randomUUID(),
     roleId,
     permissionId: p.id,
   }));
-
   await db.insert(PermissionToRole).values(rolePermissionMappings);
 
-  // 7. Create a course
-  const courseId = randomUUID();
+  // 6. Manually add one known course
+  const staticCourseId = randomUUID();
   await db.insert(Course).values({
-    id: courseId,
+    id: staticCourseId,
     duration: 120,
     ownerId: userId,
   });
 
   await db.insert(CourseTranslation).values([
     {
-      courseId,
+      courseId: staticCourseId,
       languageId: 'en',
       title: 'Intro to TypeScript',
       description: 'Learn TS from scratch.',
@@ -139,7 +133,7 @@ await db.delete(Language);
       level: 'BEGINNER',
     },
     {
-      courseId,
+      courseId: staticCourseId,
       languageId: 'es',
       title: 'Introducción a TypeScript',
       description: 'Aprende TypeScript desde cero.',
@@ -147,7 +141,7 @@ await db.delete(Language);
       level: 'BEGINNER',
     },
     {
-      courseId,
+      courseId: staticCourseId,
       languageId: 'fr',
       title: 'Introduction à TypeScript',
       description: 'Apprenez TS à partir de zéro.',
@@ -156,20 +150,63 @@ await db.delete(Language);
     },
   ]);
 
+  await db.insert(CourseImage).values({
+    id: randomUUID(),
+    courseId: staticCourseId,
+    altText: 'Intro to TS Cover',
+    contentType: 'image/jpeg',
+    blob: Buffer.from('CourseImageData', 'utf-8'),
+  });
+
+  // 7. Generate dynamic faker-based courses
+  function generateCourse() {
+    return {
+      duration: faker.number.int({ min: 60, max: 180 }),
+      translations: ['en', 'es', 'fr'].map((lang) => ({
+        languageId: lang,
+        title: faker.company.catchPhrase(),
+        description: faker.lorem.sentence(),
+        content: faker.lorem.paragraphs(2),
+        level: faker.helpers.arrayElement(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
+      })),
+      imageAlt: faker.word.words(3),
+    };
+  }
+
+  const moreCourses = Array.from({ length: 10 }, generateCourse);
+
+  for (const courseData of moreCourses) {
+    const courseId = randomUUID();
+
+    await db.insert(Course).values({
+      id: courseId,
+      duration: courseData.duration,
+      ownerId: userId,
+    });
+
+    await db.insert(CourseTranslation).values(
+      courseData.translations.map(t => ({
+        courseId,
+        ...t,
+      }))
+    );
+
+    await db.insert(CourseImage).values({
+      id: randomUUID(),
+      courseId,
+      altText: courseData.imageAlt,
+      contentType: 'image/jpeg',
+      blob: Buffer.from('CourseImageData', 'utf-8'),
+    });
+  }
+
+  // 8. Add user profile image
   await db.insert(UserImage).values({
     id: randomUUID(),
     userId,
     altText: 'User Profile Pic',
     contentType: 'image/png',
     blob: Buffer.from('FakeImageData', 'utf-8'),
-  });
-
-  await db.insert(CourseImage).values({
-    id: randomUUID(),
-    courseId,
-    altText: 'Course Cover',
-    contentType: 'image/jpeg',
-    blob: Buffer.from('CourseImageData', 'utf-8'),
   });
 
   console.log('✅ Seed completed');
