@@ -3,10 +3,6 @@
   "private": true,
   "sideEffects": false,
   "license": "MIT",
-  "epic-stack": {
-    "head": "7f86f7b6c67cd33416110f8529f3092711d032e3",
-    "date": "2025-06-16T06:45:07Z"
-  },
   "author": "Devakumar",
   "type": "module",
   "imports": {
