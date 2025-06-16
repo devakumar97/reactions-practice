@@ -50,17 +50,17 @@ export function userHasPermission(
 ) {
 	if (!user) return false
   const { action, entity, access } = parsePermissionString(permission)
-  console.log('Checking permission:', permission)
-  console.log('Parsed:', { action, entity, access })
+//   console.log('Checking permission:', permission)
+//   console.log('Parsed:', { action, entity, access })
   return user.roles.some(role => {
-    console.log('Role:', role.name)
+    // console.log('Role:', role.name)
     return role.permissions.some(p => {
-      console.log('Permission:', p)
+    //   console.log('Permission:', p)
       const match =
         p.entity === entity &&
         p.action === action &&
         (!access || access.includes(p.access))
-      console.log('Match:', match)
+    //   console.log('Match:', match)
       return match
     })
   })

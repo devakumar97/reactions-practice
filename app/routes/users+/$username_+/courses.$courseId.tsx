@@ -142,10 +142,10 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function CourseRoute() {
 	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
-	console.log('user:', user)
+	// console.log('user:', user)
 
 	const isOwner = user?.id === data.course.ownerId
-console.log('data.course.ownerId', data.course.ownerId)
+// console.log('data.course.ownerId', data.course.ownerId)
 	const {t} = useTranslation()
 
 	const canDelete = userHasPermission(
