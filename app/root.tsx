@@ -247,25 +247,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-	/* <-- Adding state to handle socket connection --> */
-    const [socket, setSocket] = useState<Socket | undefined>();
-
-    useEffect(() => {
-        const newSocket = io();
-        setSocket(newSocket);
-        return () => {
-            newSocket.close();
-        }
-    }, [])
-
-    useEffect(() => {
-        if (!socket) return;
-        socket.on("confirmation" , (data) => {
-            console.log(data);
-        })
-    },[socket])
-	/* <-- End of adding state to handle socket connection --> */
-
 	const data = useLoaderData<typeof loader>()
 	const user = useOptionalUser()
 	const theme = useTheme()
@@ -276,6 +257,35 @@ function App() {
 	const { locale } = data.requestInfo
 	useToast(data.toast)
 	useChangeLanguage(locale)
+	
+	/* <-- Adding state to handle socket connection --> */
+    const [socket, setSocket] = useState<Socket | undefined>();
+	const [isConnected, setIsConnected] = useState(false);
+
+
+    useEffect(() => {
+	if (!user) return;
+
+	const newSocket = io();
+	setSocket(newSocket);
+	setIsConnected(newSocket.connected);
+
+	const handleConnect = () => setIsConnected(true);
+	const handleDisconnect = () => setIsConnected(false);
+
+	newSocket.on('connect', handleConnect);
+	newSocket.on('disconnect', handleDisconnect);
+
+	return () => {
+		newSocket.off('connect', handleConnect);
+		newSocket.off('disconnect', handleDisconnect);
+		newSocket.close();
+	};
+}, [user]);
+
+	/* <-- End of adding state to handle socket connection --> */
+
+
 
 	return (
 		<>
@@ -283,10 +293,6 @@ function App() {
 				<header className="container py-6">
 					<nav className="flex flex-wrap items-center justify-between gap-4 sm:flex-nowrap md:gap-8">
 						<Logo />
-						{/* <div className="ml-auto hidden max-w-sm flex-1 sm:block">
-							{searchBar}
-						</div> */}
-						
 						<div className="flex items-center gap-10">
 							<LanguageDropDown />
 							{user ? (
@@ -297,6 +303,9 @@ function App() {
 								</Button>
 							)}
 							<ThemeSwitch userPreference={data.requestInfo.userPrefs.theme} />
+							<span className={isConnected ? 'text-green-500' : 'text-red-500'}>
+								{isConnected ? '🟢' : '🔴 '}
+								</span>
 						</div>
 						<div className="block w-full sm:hidden">{searchBar}</div>
 					</nav>
